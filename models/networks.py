@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 from torch.nn import init
+import torchvision 
 import functools
 from torch.optim import lr_scheduler
 
@@ -50,6 +51,8 @@ def init_weights(net, init_type='normal', gain=0.02):
 				init.kaiming_normal_(m.weight.data, a=0, mode='fan_in')
 			elif init_type == 'orthogonal':
 				init.orthogonal_(m.weight.data, gain=gain)
+			elif init_type == 'pretrained':
+				pass
 			else:
 				raise NotImplementedError('initialization method [%s] is not implemented' % init_type)
 			if hasattr(m, 'bias') and m.bias is not None:
@@ -70,173 +73,298 @@ def init_net(net, init_type='normal', init_gain=0.02, gpu_ids=[]):
 	init_weights(net, init_type, gain=init_gain)
 	return net
 
-def define_encoder(input_nc, output_nc, ngf, netE, norm='batch', use_dropout=False, init_type='normal', init_gain=0.02, gpu_ids=[]):
+def define_FuseNet(rgb_e=True, depth_e=True, rgb_d=True, depth_d=False, norm='batch', use_dropout=True, init_type='pretrained', init_gain=0.02, gpu_ids=[]):
 	net = None
 	norm_layer = get_norm_layer(norm_type=norm)
 
-	if netE == 'vgg_16_rgb_encoder':
-		net = VggGenerator(rgb=True)
-	elif netE == 'vgg_16_depth_encoder':
-		net = VggGenerator(rgb=False)
-	else:
-		raise NotImplementedError('Generator model name [%s] is not recognized' % netE)
-
+	net = FusenetGenerator(rgb_e=True, depth_e=True, rgb_d=True, depth_d=False )
 	return init_net(net, init_type, init_gain, gpu_ids)
-
-def define_dencoder(input_nc, output_nc, ngf, netE, norm='batch', use_dropout=False, init_type='normal', init_gain=0.02, gpu_ids=[]):
-	 net = None
-	 norm_layer = get_norm_layer(norm_type=norm)
-
-
-
-def define_G(input_nc, output_nc, ngf, netG, norm='batch', use_dropout=False, init_type='normal', init_gain=0.02, gpu_ids=[]):
-	net = None
-	norm_layer = get_norm_layer(norm_type=norm)
-
-	if netG == 'resnet_9blocks':
-		net = ResnetGenerator(input_nc, output_nc, ngf, norm_layer=norm_layer, use_dropout=use_dropout, n_blocks=9)
-	elif netG == 'resnet_6blocks':
-		net = ResnetGenerator(input_nc, output_nc, ngf, norm_layer=norm_layer, use_dropout=use_dropout, n_blocks=6)
-	elif netG == 'unet_128':
-		net = UnetGenerator(input_nc, output_nc, 7, ngf, norm_layer=norm_layer, use_dropout=use_dropout)
-	elif netG == 'unet_256':
-		net = UnetGenerator(input_nc, output_nc, 8, ngf, norm_layer=norm_layer, use_dropout=use_dropout)
-	else:
-		raise NotImplementedError('Generator model name [%s] is not recognized' % netG)
-	return init_net(net, init_type, init_gain, gpu_ids)
-
 
 
 ##############################################################################
 # Classes
 ##############################################################################
-class VggGenerator(nn.Module):
-	def __init__(self, rgb=True):
-		super(VggGenerator, self).__init__()
-		self.rgb = rgb
 
-		self.model = nn.Sequential(*model)
+class FusenetGenerator(nn.Module):
+	def __init__(self,rgb_e=True, depth_e=True, rgb_d=True, depth_d=False,):
+		super(FusenetGenerator, self).__init__()
+		if rgb_e :
+			feats_rgb = list(models.vgg16(pretrained=True).features.children())
+		
+			##### RGB ENCODER ####
+			self.CBR1_RGB = nn.Sequential (
+			    feats_rgb[0].cuda(gpu_device),
+			    nn.BatchNorm2d(64).cuda(gpu_device),
+			    feats_rgb[1].cuda(gpu_device),
+			    feats_rgb[2].cuda(gpu_device),
+			    nn.BatchNorm2d(64).cuda(gpu_device),
+			    feats_rgb[3].cuda(gpu_device),
+			)
 
-	def forward(self, input):
-		return self.model(input)
+			self.CBR2_RGB = nn.Sequential (
+			    feats_rgb[5].cuda(gpu_device),
+			    nn.BatchNorm2d(128).cuda(gpu_device),
+			    feats_rgb[6].cuda(gpu_device),
+			    feats_rgb[7].cuda(gpu_device),
+			    nn.BatchNorm2d(128).cuda(gpu_device),
+			    feats_rgb[8].cuda(gpu_device),
+			)
 
+			self.CBR3_RGB = nn.Sequential (        
+			    feats_rgb[10].cuda(gpu_device),
+			    nn.BatchNorm2d(256).cuda(gpu_device),
+			    feats_rgb[11].cuda(gpu_device),
+			    feats_rgb[12].cuda(gpu_device),
+			    nn.BatchNorm2d(256).cuda(gpu_device),
+			    feats_rgb[13].cuda(gpu_device),
+			    feats_rgb[14].cuda(gpu_device),
+			    nn.BatchNorm2d(256).cuda(gpu_device),
+			    feats_rgb[15].cuda(gpu_device),
+			)
 
-# Defines the GAN loss which uses either LSGAN or the regular GAN.
-# When LSGAN is used, it is basically same as MSELoss,
-# but it abstracts away the need to create the target label tensor
-# that has the same size as the input
-class GANLoss(nn.Module):
-	def __init__(self, use_lsgan=True, target_real_label=1.0, target_fake_label=0.0):
-		super(GANLoss, self).__init__()
-		self.register_buffer('real_label', torch.tensor(target_real_label))
-		self.register_buffer('fake_label', torch.tensor(target_fake_label))
-		if use_lsgan:
-			self.loss = nn.MSELoss()
+			self.dropout3 = nn.Dropout(p=0.5).cuda(gpu_device)
+
+			self.CBR4_RGB = nn.Sequential (
+			    feats_rgb[17].cuda(gpu_device),
+			    nn.BatchNorm2d(512).cuda(gpu_device),
+			    feats_rgb[18].cuda(gpu_device),
+			    feats_rgb[19].cuda(gpu_device),
+			    nn.BatchNorm2d(512).cuda(gpu_device),
+			    feats_rgb[20].cuda(gpu_device),
+			    feats_rgb[21].cuda(gpu_device),
+			    nn.BatchNorm2d(512).cuda(gpu_device),
+			    feats_rgb[22].cuda(gpu_device),
+			)
+
+			self.dropout4 = nn.Dropout(p=0.5).cuda(gpu_device)
+
+			self.CBR5_RGB = nn.Sequential (        
+			    feats_rgb[24].cuda(gpu_device),
+			    nn.BatchNorm2d(512).cuda(gpu_device),
+			    feats_rgb[25].cuda(gpu_device),
+			    feats_rgb[26].cuda(gpu_device),
+			    nn.BatchNorm2d(512).cuda(gpu_device),
+			    feats_rgb[27].cuda(gpu_device),
+			    feats_rgb[28].cuda(gpu_device),
+			    nn.BatchNorm2d(512).cuda(gpu_device),
+			    feats_rgb[29].cuda(gpu_device),
+			)
+
+			self.dropout5 = nn.Dropout(p=0.5).cuda(gpu_device)
+		
+
+		if depth_e :
+
+			feats_depth = list(models.vgg16(pretrained=True).features.children())
+			avg = torch.mean(feats_depth[0].cuda(gpu_device).weight.data, dim=1)
+		
+			self.conv11d = nn.Conv2d(1, 64, kernel_size=3, padding=1).cuda(gpu_device)
+			self.conv11d.weight.data = avg 
+
+			self.CBR1_D = nn.Sequential(
+			    nn.BatchNorm2d(64).cuda(gpu_device),
+			    feats[1].cuda(gpu_device),
+			    feats[2].cuda(gpu_device),
+			    nn.BatchNorm2d(64).cuda(gpu_device),
+			    feats[3].cuda(gpu_device),
+			)
+			self.CBR2_D = nn.Sequential(
+			    feats[5].cuda(gpu_device),
+			    nn.BatchNorm2d(128).cuda(gpu_device),
+			    feats[6].cuda(gpu_device),
+			    feats[7].cuda(gpu_device),
+			    nn.BatchNorm2d(128).cuda(gpu_device),
+			    feats[8].cuda(gpu_device),
+			)
+			self.CBR3_D = nn.Sequential(
+			    feats[10].cuda(gpu_device),
+			    nn.BatchNorm2d(256).cuda(gpu_device),
+			    feats[11].cuda(gpu_device),
+			    feats[12].cuda(gpu_device),
+			    nn.BatchNorm2d(256).cuda(gpu_device),
+			    feats[13].cuda(gpu_device),
+			    feats[14].cuda(gpu_device),
+			    nn.BatchNorm2d(256).cuda(gpu_device),
+			    feats[15].cuda(gpu_device),
+			)
+
+			self.dropout3_d = nn.Dropout(p=0.5).cuda(gpu_device)
+
+			self.CBR4_D = nn.Sequential(
+			    feats[17].cuda(gpu_device),
+			    nn.BatchNorm2d(512).cuda(gpu_device),
+			    feats[18].cuda(gpu_device),
+			    feats[19].cuda(gpu_device),
+			    nn.BatchNorm2d(512).cuda(gpu_device),
+			    feats[20].cuda(gpu_device),
+			    feats[21].cuda(gpu_device),
+			    nn.BatchNorm2d(512).cuda(gpu_device),
+			    feats[22].cuda(gpu_device),
+			)
+
+			self.dropout4_d = nn.Dropout(p=0.5).cuda(gpu_device)
+
+			self.CBR5_D = nn.Sequential(
+			    feats[24].cuda(gpu_device),
+			    nn.BatchNorm2d(512).cuda(gpu_device),
+			    feats[25].cuda(gpu_device),
+			    feats[26].cuda(gpu_device),
+			    nn.BatchNorm2d(512).cuda(gpu_device),
+			    feats[27].cuda(gpu_device),
+			    feats[28].cuda(gpu_device),
+			    nn.BatchNorm2d(512).cuda(gpu_device),
+			    feats[29].cuda(gpu_device),
+			) 
+		if  rgb_d :
+		
+			####  RGB DECODER  ####
+			self.CBR5_Dec = nn.Sequential (        
+			nn.Conv2d(512, 512, kernel_size=3, padding=1).cuda(gpu_device),
+			nn.BatchNorm2d(512, momentum= batchNorm_momentum).cuda(gpu_device),
+			nn.ReLU().cuda(gpu_device),
+			nn.Conv2d(512, 512, kernel_size=3, padding=1).cuda(gpu_device),
+			nn.BatchNorm2d(512, momentum= batchNorm_momentum).cuda(gpu_device),
+			nn.ReLU().cuda(gpu_device),
+			nn.Conv2d(512, 512, kernel_size=3, padding=1).cuda(gpu_device),
+			nn.BatchNorm2d(512, momentum= batchNorm_momentum).cuda(gpu_device),
+			nn.ReLU().cuda(gpu_device),
+			nn.Dropout(p=0.5).cuda(gpu_device),
+			)
+
+			self.CBR4_Dec = nn.Sequential (        
+			nn.Conv2d(512, 512, kernel_size=3, padding=1).cuda(gpu_device),
+			nn.BatchNorm2d(512, momentum= batchNorm_momentum).cuda(gpu_device),
+			nn.ReLU().cuda(gpu_device),
+			nn.Conv2d(512, 512, kernel_size=3, padding=1).cuda(gpu_device),
+			nn.BatchNorm2d(512, momentum= batchNorm_momentum).cuda(gpu_device),
+			nn.ReLU().cuda(gpu_device),
+			nn.Conv2d(512, 256, kernel_size=3, padding=1).cuda(gpu_device),
+			nn.BatchNorm2d(256, momentum= batchNorm_momentum).cuda(gpu_device),
+			nn.ReLU().cuda(gpu_device),
+			nn.Dropout(p=0.5).cuda(gpu_device),
+			)
+
+			self.CBR3_Dec = nn.Sequential (        
+			nn.Conv2d(256, 256, kernel_size=3, padding=1).cuda(gpu_device),
+			nn.BatchNorm2d(256, momentum= batchNorm_momentum).cuda(gpu_device),
+			nn.ReLU().cuda(gpu_device),
+			nn.Conv2d(256, 256, kernel_size=3, padding=1).cuda(gpu_device),
+			nn.BatchNorm2d(256, momentum= batchNorm_momentum).cuda(gpu_device),
+			nn.ReLU().cuda(gpu_device),
+			nn.Conv2d(256,  128, kernel_size=3, padding=1).cuda(gpu_device),
+			nn.BatchNorm2d(128, momentum= batchNorm_momentum).cuda(gpu_device),
+			nn.ReLU().cuda(gpu_device),
+			nn.Dropout(p=0.5).cuda(gpu_device),
+			)
+
+			self.CBR2_Dec = nn.Sequential (
+			nn.Conv2d(128, 128, kernel_size=3, padding=1).cuda(gpu_device),
+			nn.BatchNorm2d(128, momentum= batchNorm_momentum).cuda(gpu_device),
+			nn.ReLU().cuda(gpu_device),
+			nn.Conv2d(128, 64, kernel_size=3, padding=1).cuda(gpu_device),
+			nn.BatchNorm2d(64, momentum= batchNorm_momentum).cuda(gpu_device),
+			nn.ReLU().cuda(gpu_device),
+			)
+
+			self.CBR1_Dec = nn.Sequential (                
+			nn.Conv2d(64, 64, kernel_size=3, padding=1).cuda(gpu_device),
+			nn.BatchNorm2d(64, momentum= batchNorm_momentum).cuda(gpu_device),
+			nn.ReLU().cuda(gpu_device),        	
+			nn.Conv2d(64, num_labels, kernel_size=3, padding=1).cuda(gpu_device),
+			)
+
+	def forward(self, rgb_inputs,depth_inputs):
+		
+		########  DEPTH ENCODER  ########
+
+		# Stage 1
+		x = self.conv11d(depth_inputs)
+		x_1 = self.CBR1_D(x)
+		x, id1_d = F.max_pool2d(x_1, kernel_size=2, stride=2, return_indices=True)
+		
+		# Stage 2
+		x_2 = self.CBR2_D(x)
+		x, id2_d = F.max_pool2d(x_2, kernel_size=2, stride=2, return_indices=True)
+
+		# Stage 3
+		x_3 = self.CBR3_D(x)
+		x, id3_d = F.max_pool2d(x_3, kernel_size=2, stride=2, return_indices=True)
+		x = self.dropout3_d(x)
+
+		# Stage 4
+		x_4 = self.CBR4_D(x)
+		x, id4_d = F.max_pool2d(x_4, kernel_size=2, stride=2, return_indices=True)
+		x = self.dropout4_d(x)
+
+		# Stage 5
+		x_5 = self.CBR5_D(x)
+
+		########  RGB ENCODER  ########
+
+		# Stage 1
+		y = self.CBR1_RGB(rgb_inputs)
+		y = torch.add(y,x_1)
+		y, id1 = F.max_pool2d(y, kernel_size=2, stride=2, return_indices=True)
+
+		# Stage 2
+		y = self.CBR2_RGB(y)
+		y = torch.add(y,x_2)
+		y, id2 = F.max_pool2d(y, kernel_size=2, stride=2, return_indices=True)
+
+		# Stage 3
+		y = self.CBR3_RGB(y)
+		y = torch.add(y,x_3)
+		y, id3 = F.max_pool2d(y, kernel_size=2, stride=2, return_indices=True)
+		y = self.dropout3(y)
+
+		# Stage 4
+		y = self.CBR4_RGB(y)
+		y = torch.add(y,x_4)
+		y, id4 = F.max_pool2d(y, kernel_size=2, stride=2, return_indices=True)
+		y = self.dropout4(y)
+
+		# Stage 5
+		y = self.CBR5_RGB(y)
+		y = torch.add(y,x_5)
+		y_size = y.size() 
+
+		y, id5 = F.max_pool2d(y, kernel_size=2, stride=2, return_indices=True)
+		y = self.dropout5(y)
+
+		########  DECODER  ########
+
+		# Stage 5 dec
+		y = F.max_unpool2d(y, id5, kernel_size=2, stride=2, output_size=y_size)
+		y = self.CBR5_Dec(y)
+
+		# Stage 4 dec
+		y = F.max_unpool2d(y, id4, kernel_size=2, stride=2)
+		y = self.CBR4_Dec(y)
+
+		# Stage 3 dec
+		y = F.max_unpool2d(y, id3, kernel_size=2, stride=2)
+		y = self.CBR3_Dec(y)
+
+		# Stage 2 dec
+		y = F.max_unpool2d(y, id2, kernel_size=2, stride=2)
+		y = self.CBR2_Dec(y)
+
+		# Stage 1 dec
+		y = F.max_unpool2d(y, id1, kernel_size=2, stride=2)
+		y = self.CBR1_Dec(y)
+
+		return y
+		
+class SegmantationLoss(nn.Module):
+	def __init__(self):
+		super(SegmantationLoss, self).__init__()
+		
+		self.loss = nn.CrossEntropyLoss()
+
+	def __call__(self, output, target, weights=None,pixel_average=True):
+		if pixel_average:
+			 self.loss(output, target, weights=weights,size_average=False) / target_mask.data.sum()
 		else:
-			self.loss = nn.BCELoss()
-
-	def get_target_tensor(self, input, target_is_real):
-		if target_is_real:
-			target_tensor = self.real_label
-		else:
-			target_tensor = self.fake_label
-		return target_tensor.expand_as(input)
-
-	def __call__(self, input, target_is_real):
-		target_tensor = self.get_target_tensor(input, target_is_real)
-		return self.loss(input, target_tensor)
-
-
-# Defines the generator that consists of Resnet blocks between a few
-# downsampling/upsampling operations.
-# Code and idea originally from Justin Johnson's architecture.
-# https://github.com/jcjohnson/fast-neural-style/
-class ResnetGenerator(nn.Module):
-	def __init__(self, input_nc, output_nc, ngf=64, norm_layer=nn.BatchNorm2d, use_dropout=False, n_blocks=6, padding_type='reflect'):
-		assert(n_blocks >= 0)
-		super(ResnetGenerator, self).__init__()
-		self.input_nc = input_nc
-		self.output_nc = output_nc
-		self.ngf = ngf
-		if type(norm_layer) == functools.partial:
-			use_bias = norm_layer.func == nn.InstanceNorm2d
-		else:
-			use_bias = norm_layer == nn.InstanceNorm2d
-
-		model = [nn.ReflectionPad2d(3),
-				 nn.Conv2d(input_nc, ngf, kernel_size=7, padding=0,
-						   bias=use_bias),
-				 norm_layer(ngf),
-				 nn.ReLU(True)]
-
-		n_downsampling = 2
-		for i in range(n_downsampling):
-			mult = 2**i
-			model += [nn.Conv2d(ngf * mult, ngf * mult * 2, kernel_size=3,
-								stride=2, padding=1, bias=use_bias),
-					  norm_layer(ngf * mult * 2),
-					  nn.ReLU(True)]
-
-		mult = 2**n_downsampling
-		for i in range(n_blocks):
-			model += [ResnetBlock(ngf * mult, padding_type=padding_type, norm_layer=norm_layer, use_dropout=use_dropout, use_bias=use_bias)]
-
-		for i in range(n_downsampling):
-			mult = 2**(n_downsampling - i)
-			model += [nn.ConvTranspose2d(ngf * mult, int(ngf * mult / 2),
-										 kernel_size=3, stride=2,
-										 padding=1, output_padding=1,
-										 bias=use_bias),
-					  norm_layer(int(ngf * mult / 2)),
-					  nn.ReLU(True)]
-		model += [nn.ReflectionPad2d(3)]
-		model += [nn.Conv2d(ngf, output_nc, kernel_size=7, padding=0)]
-		model += [nn.Tanh()]
-
-		self.model = nn.Sequential(*model)
-
-	def forward(self, input):
-		return self.model(input)
-
-
-# Define a resnet block
-class ResnetBlock(nn.Module):
-	def __init__(self, dim, padding_type, norm_layer, use_dropout, use_bias):
-		super(ResnetBlock, self).__init__()
-		self.conv_block = self.build_conv_block(dim, padding_type, norm_layer, use_dropout, use_bias)
-
-	def build_conv_block(self, dim, padding_type, norm_layer, use_dropout, use_bias):
-		conv_block = []
-		p = 0
-		if padding_type == 'reflect':
-			conv_block += [nn.ReflectionPad2d(1)]
-		elif padding_type == 'replicate':
-			conv_block += [nn.ReplicationPad2d(1)]
-		elif padding_type == 'zero':
-			p = 1
-		else:
-			raise NotImplementedError('padding [%s] is not implemented' % padding_type)
-
-		conv_block += [nn.Conv2d(dim, dim, kernel_size=3, padding=p, bias=use_bias),
-					   norm_layer(dim),
-					   nn.ReLU(True)]
-		if use_dropout:
-			conv_block += [nn.Dropout(0.5)]
-
-		p = 0
-		if padding_type == 'reflect':
-			conv_block += [nn.ReflectionPad2d(1)]
-		elif padding_type == 'replicate':
-			conv_block += [nn.ReplicationPad2d(1)]
-		elif padding_type == 'zero':
-			p = 1
-		else:
-			raise NotImplementedError('padding [%s] is not implemented' % padding_type)
-		conv_block += [nn.Conv2d(dim, dim, kernel_size=3, padding=p, bias=use_bias),
-					   norm_layer(dim)]
-
-		return nn.Sequential(*conv_block)
-
-	def forward(self, x):
-		out = x + self.conv_block(x)
-		return out
+			return self.loss(output, target, weights=weights,size_average=False)
+		
+		
