@@ -35,6 +35,7 @@ def create_dataset(dataset):
 		for rgb_image in rgb_images:
 			img = np.transpose(rgb_image,(1,2,0))
 			img = cv2.resize(img,(224,224),interpolation=cv2.INTER_LINEAR)
+			img = np.transpose(rgb_image,(2,0,1)) # 3,w,h
 			rgbs.append(rgbs)
 
 		for depth_image in depth_images:
