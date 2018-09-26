@@ -5,6 +5,7 @@ import torch
 from data.base_dataset import BaseDataset
 from data.image_folder import make_dataset
 from PIL import Image
+import numpy as np 
 
 class Nyu2Dataset(BaseDataset):
 	@staticmethod
@@ -13,19 +14,21 @@ class Nyu2Dataset(BaseDataset):
 
 	def initialize(self, opt):
 		self.opt = opt
+		self.batch_size = opt.batch_size
 		self.root = opt.dataroot # path for nyu2.npy
 		self.nyu2 = np.load("{}/{}".format(self.root,"nyu2.npy")).tolist()
 		assert(opt.resize_or_crop == 'resize_and_crop')
 
 	def __getitem__(self, index):
 		
-		rgb_image = self.nyu2["rgb_images"][index]
+		rgb_image = np.array(self.nyu2["rgb_images"][index],dtype=np.uint8)
 		depth_image = self.nyu2["depth_images"][index]
-		mask = self.nyu2["masks"][index]
+		depth_image = np.reshape(depth_image, (1,depth_image.shape[0], depth_image.shape[1]))
+		mask = np.array(self.nyu2["masks"][index],dtype=np.uint8)
 						
 		rgb_image = transforms.ToTensor()(rgb_image)
 		depth_image = transforms.ToTensor()(depth_image)
-		mask = transforms.ToTensor()(mask)
+		#mask = transforms.ToTensor()(mask)
 		
 		#Random flip ? 
 		#if (not self.opt.no_flip) and random.random() < 0.5:
@@ -33,7 +36,10 @@ class Nyu2Dataset(BaseDataset):
 		#	idx = torch.LongTensor(idx)
 		#	A = A.index_select(2, idx)
 		#	B = B.index_select(2, idx)
-
+		rgb_image = rgb_image.unsqueeze(0)
+		depth_image = depth_image.unsqueeze(0)
+		#mask = mask.unsqueeze(0)
+		
 		return {'rgb_image': rgb_image, 'depth_image': depth_image, 'mask': mask}
 
 	def __len__(self):

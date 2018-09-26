@@ -41,7 +41,8 @@ def create_dataset(dataset):
 		for depth_image in depth_images:
 			depth_image = (depth_image - min_depth) / (1.*(max_depth-min_depth))*255
 			depth_image = cv2.resize(depth_image,(224,224),interpolation=cv2.INTER_NEAREST)
-			depths.append(depth_image.astype(int))
+			depth_image = depth_image.astype(int)
+			depths.append(np.array(depth_image,dtype=np.uint8))
 
 		for label in labels:
 			label = cv2.resize(label,(224,224),interpolation=cv2.INTER_NEAREST)

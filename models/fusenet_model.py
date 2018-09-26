@@ -25,7 +25,7 @@ class FuseNetModel(BaseModel):
 		self.visual_names = ['rgb_image', 'depth_image', 'mask']
 		# specify the models you want to save to the disk. The program will call base_model.save_networks and base_model.load_networks
 		
-		self.model_names = ['rgb_encoder', 'depth_encoder','rgb_decoder']
+		self.model_names = ['FuseNet']
 		
 		# load/define networks
 		self.netFuseNet = networks.define_FuseNet(rgb_e=True, depth_e=True, rgb_d=True, depth_d=False, norm=opt.norm,use_dropout= not opt.no_dropout, init_type=opt.init_type, 
