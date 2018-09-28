@@ -20,15 +20,16 @@ class Nyu2Dataset(BaseDataset):
 		assert(opt.resize_or_crop == 'resize_and_crop')
 
 	def __getitem__(self, index):
-		
 		rgb_image = np.array(self.nyu2["rgb_images"][index],dtype=np.uint8)
 		depth_image = self.nyu2["depth_images"][index]
-		depth_image = np.reshape(depth_image, (1,depth_image.shape[0], depth_image.shape[1]))
+		depth_image = np.expand_dims(depth_image,axis=2)
 		mask = np.array(self.nyu2["masks"][index],dtype=np.uint8)
-						
+		
 		rgb_image = transforms.ToTensor()(rgb_image)
 		depth_image = transforms.ToTensor()(depth_image)
-		#mask = transforms.ToTensor()(mask)
+		
+		mask = torch.from_numpy(mask)
+		mask = mask.type(torch.LongTensor)
 		
 		#Random flip ? 
 		#if (not self.opt.no_flip) and random.random() < 0.5:
@@ -36,8 +37,6 @@ class Nyu2Dataset(BaseDataset):
 		#	idx = torch.LongTensor(idx)
 		#	A = A.index_select(2, idx)
 		#	B = B.index_select(2, idx)
-		rgb_image = rgb_image.unsqueeze(0)
-		depth_image = depth_image.unsqueeze(0)
 		#mask = mask.unsqueeze(0)
 		
 		return {'rgb_image': rgb_image, 'depth_image': depth_image, 'mask': mask}

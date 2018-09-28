@@ -22,13 +22,13 @@ class FuseNetModel(BaseModel):
 		# specify the training losses you want to print out. The program will call base_model.get_current_losses
 		self.loss_names = ['segmentation']
 		# specify the images you want to save/display. The program will call base_model.get_current_visuals
-		self.visual_names = ['rgb_image', 'depth_image', 'mask']
+		self.visual_names = ['rgb_image']
 		# specify the models you want to save to the disk. The program will call base_model.save_networks and base_model.load_networks
 		
 		self.model_names = ['FuseNet']
 		
 		# load/define networks
-		self.netFuseNet = networks.define_FuseNet(rgb_e=True, depth_e=True, rgb_d=True, depth_d=False, norm=opt.norm,use_dropout= not opt.no_dropout, init_type=opt.init_type, 
+		self.netFuseNet = networks.define_FuseNet(rgb_enc=True, depth_enc=True, rgb_dec=True, depth_dec=False, norm=opt.norm,use_dropout= not opt.no_dropout, init_type=opt.init_type, 
 												init_gain= opt.init_gain, gpu_ids= self.gpu_ids)
 
 		if self.isTrain:
@@ -56,9 +56,9 @@ class FuseNetModel(BaseModel):
 
 	def backward(self):
 		
-		self.loss = self.criterionSegmentation(self.output, self.mask)
+		self.loss_segmentation = self.criterionSegmentation(self.output, self.mask)
 	
-		self.loss.backward()
+		self.loss_segmentation.backward()
 
 	def optimize_parameters(self):
 		self.forward()

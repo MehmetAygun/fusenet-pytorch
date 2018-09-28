@@ -4,7 +4,10 @@ from torch.nn import init
 import torchvision 
 import functools
 from torch.optim import lr_scheduler
+import torch.nn.functional as F
 
+torch.backends.cudnn.deterministic = True
+torch.manual_seed(2)
 
 ###############################################################################
 # Helper Functions
@@ -74,11 +77,11 @@ def init_net(net, init_type='normal', init_gain=0.02, gpu_ids=[]):
 	init_weights(net, init_type, gain=init_gain)
 	return net
 
-def define_FuseNet(rgb_e=True, depth_e=True, rgb_d=True, depth_d=False, norm='batch', use_dropout=True, init_type='pretrained', init_gain=0.02, gpu_ids=[]):
+def define_FuseNet(rgb_enc=True, depth_enc=True, rgb_dec=True, depth_dec=False, norm='batch', use_dropout=True, init_type='pretrained', init_gain=0.02, gpu_ids=[]):
 	net = None
 	norm_layer = get_norm_layer(norm_type=norm)
 
-	net = FusenetGenerator(rgb_e=True, depth_e=True, rgb_d=True, depth_d=False )
+	net = FusenetGenerator(rgb_enc=True, depth_enc=True, rgb_dec=True, depth_dec=False )
 	return init_net(net, init_type, init_gain, gpu_ids)
 
 
@@ -87,199 +90,200 @@ def define_FuseNet(rgb_e=True, depth_e=True, rgb_d=True, depth_d=False, norm='ba
 ##############################################################################
 
 class FusenetGenerator(nn.Module):
-	def __init__(self,rgb_e=True, depth_e=True, rgb_d=True, depth_d=False):
+	def __init__(self,rgb_enc=True, depth_enc=True, rgb_dec=True, depth_dec=False):
 		super(FusenetGenerator, self).__init__()
 		batchNorm_momentum = 0.1#TODO:make param
 		num_labels = 40 #TODO:make parame
-		if rgb_e :
+		if rgb_enc :
 			feats_rgb = list(torchvision.models.vgg16(pretrained=True).features.children())
 		
 			##### RGB ENCODER ####
 			self.CBR1_RGB = nn.Sequential (
-			    feats_rgb[0].cuda(),
-			    nn.BatchNorm2d(64).cuda(),
-			    feats_rgb[1].cuda(),
-			    feats_rgb[2].cuda(),
-			    nn.BatchNorm2d(64).cuda(),
-			    feats_rgb[3].cuda(),
+			    feats_rgb[0],
+			    nn.BatchNorm2d(64),
+			    feats_rgb[1],
+			    feats_rgb[2],
+			    nn.BatchNorm2d(64),
+			    feats_rgb[3],
 			)
 
 			self.CBR2_RGB = nn.Sequential (
-			    feats_rgb[5].cuda(),
-			    nn.BatchNorm2d(128).cuda(),
-			    feats_rgb[6].cuda(),
-			    feats_rgb[7].cuda(),
-			    nn.BatchNorm2d(128).cuda(),
-			    feats_rgb[8].cuda(),
+			    feats_rgb[5],
+			    nn.BatchNorm2d(128),
+			    feats_rgb[6],
+			    feats_rgb[7],
+			    nn.BatchNorm2d(128),
+			    feats_rgb[8],
 			)
 
 			self.CBR3_RGB = nn.Sequential (        
-			    feats_rgb[10].cuda(),
-			    nn.BatchNorm2d(256).cuda(),
-			    feats_rgb[11].cuda(),
-			    feats_rgb[12].cuda(),
-			    nn.BatchNorm2d(256).cuda(),
-			    feats_rgb[13].cuda(),
-			    feats_rgb[14].cuda(),
-			    nn.BatchNorm2d(256).cuda(),
-			    feats_rgb[15].cuda(),
+			    feats_rgb[10],
+			    nn.BatchNorm2d(256),
+			    feats_rgb[11],
+			    feats_rgb[12],
+			    nn.BatchNorm2d(256),
+			    feats_rgb[13],
+			    feats_rgb[14],
+			    nn.BatchNorm2d(256),
+			    feats_rgb[15],
 			)
 
-			self.dropout3 = nn.Dropout(p=0.5).cuda()
+			self.dropout3 = nn.Dropout(p=0.5)
 
 			self.CBR4_RGB = nn.Sequential (
-			    feats_rgb[17].cuda(),
-			    nn.BatchNorm2d(512).cuda(),
-			    feats_rgb[18].cuda(),
-			    feats_rgb[19].cuda(),
-			    nn.BatchNorm2d(512).cuda(),
-			    feats_rgb[20].cuda(),
-			    feats_rgb[21].cuda(),
-			    nn.BatchNorm2d(512).cuda(),
-			    feats_rgb[22].cuda(),
+			    feats_rgb[17],
+			    nn.BatchNorm2d(512),
+			    feats_rgb[18],
+			    feats_rgb[19],
+			    nn.BatchNorm2d(512),
+			    feats_rgb[20],
+			    feats_rgb[21],
+			    nn.BatchNorm2d(512),
+			    feats_rgb[22],
 			)
 
-			self.dropout4 = nn.Dropout(p=0.5).cuda()
+			self.dropout4 = nn.Dropout(p=0.5)
 
 			self.CBR5_RGB = nn.Sequential (        
-			    feats_rgb[24].cuda(),
-			    nn.BatchNorm2d(512).cuda(),
-			    feats_rgb[25].cuda(),
-			    feats_rgb[26].cuda(),
-			    nn.BatchNorm2d(512).cuda(),
-			    feats_rgb[27].cuda(),
-			    feats_rgb[28].cuda(),
-			    nn.BatchNorm2d(512).cuda(),
-			    feats_rgb[29].cuda(),
+			    feats_rgb[24],
+			    nn.BatchNorm2d(512),
+			    feats_rgb[25],
+			    feats_rgb[26],
+			    nn.BatchNorm2d(512),
+			    feats_rgb[27],
+			    feats_rgb[28],
+			    nn.BatchNorm2d(512),
+			    feats_rgb[29],
 			)
 
-			self.dropout5 = nn.Dropout(p=0.5).cuda()
+			self.dropout5 = nn.Dropout(p=0.5)
 		
 
-		if depth_e :
+		if depth_enc :
 
 			feats_depth = list(torchvision.models.vgg16(pretrained=True).features.children())
-			avg = torch.mean(feats_depth[0].cuda().weight.data, dim=1)
+			avg = torch.mean(feats_depth[0].weight.data, dim=1)
 		
-			self.conv11d = nn.Conv2d(1, 64, kernel_size=3, padding=1).cuda()
-			self.conv11d.weight.data = avg 
+			self.conv11d = nn.Conv2d(1, 64, kernel_size=3,padding=1)
+			#self.conv11d.weight.data = avg 
 
 			self.CBR1_D = nn.Sequential(
-			    nn.BatchNorm2d(64).cuda(),
-			    feats_depth[1].cuda(),
-			    feats_depth[2].cuda(),
-			    nn.BatchNorm2d(64).cuda(),
-			    feats_depth[3].cuda(),
+			    nn.BatchNorm2d(64),
+			    feats_depth[1],
+			    feats_depth[2],
+			    nn.BatchNorm2d(64),
+			    feats_depth[3],
 			)
 			self.CBR2_D = nn.Sequential(
-			    feats_depth[5].cuda(),
-			    nn.BatchNorm2d(128).cuda(),
-			    feats_depth[6].cuda(),
-			    feats_depth[7].cuda(),
-			    nn.BatchNorm2d(128).cuda(),
-			    feats_depth[8].cuda(),
+			    feats_depth[5],
+			    nn.BatchNorm2d(128),
+			    feats_depth[6],
+			    feats_depth[7],
+			    nn.BatchNorm2d(128),
+			    feats_depth[8],
 			)
 			self.CBR3_D = nn.Sequential(
-			    feats_depth[10].cuda(),
-			    nn.BatchNorm2d(256).cuda(),
-			    feats_depth[11].cuda(),
-			    feats_depth[12].cuda(),
-			    nn.BatchNorm2d(256).cuda(),
-			    feats_depth[13].cuda(),
-			    feats_depth[14].cuda(),
-			    nn.BatchNorm2d(256).cuda(),
-			    feats_depth[15].cuda(),
+			    feats_depth[10],
+			    nn.BatchNorm2d(256),
+			    feats_depth[11],
+			    feats_depth[12],
+			    nn.BatchNorm2d(256),
+			    feats_depth[13],
+			    feats_depth[14],
+			    nn.BatchNorm2d(256),
+			    feats_depth[15],
 			)
 
-			self.dropout3_d = nn.Dropout(p=0.5).cuda()
+			self.dropout3_d = nn.Dropout(p=0.5)
 
 			self.CBR4_D = nn.Sequential(
-			    feats_depth[17].cuda(),
-			    nn.BatchNorm2d(512).cuda(),
-			    feats_depth[18].cuda(),
-			    feats_depth[19].cuda(),
-			    nn.BatchNorm2d(512).cuda(),
-			    feats_depth[20].cuda(),
-			    feats_depth[21].cuda(),
-			    nn.BatchNorm2d(512).cuda(),
-			    feats_depth[22].cuda(),
+			    feats_depth[17],
+			    nn.BatchNorm2d(512),
+			    feats_depth[18],
+			    feats_depth[19],
+			    nn.BatchNorm2d(512),
+			    feats_depth[20],
+			    feats_depth[21],
+			    nn.BatchNorm2d(512),
+			    feats_depth[22],
 			)
 
-			self.dropout4_d = nn.Dropout(p=0.5).cuda()
+			self.dropout4_d = nn.Dropout(p=0.5)
 
 			self.CBR5_D = nn.Sequential(
-			    feats_depth[24].cuda(),
-			    nn.BatchNorm2d(512).cuda(),
-			    feats_depth[25].cuda(),
-			    feats_depth[26].cuda(),
-			    nn.BatchNorm2d(512).cuda(),
-			    feats_depth[27].cuda(),
-			    feats_depth[28].cuda(),
-			    nn.BatchNorm2d(512).cuda(),
-			    feats_depth[29].cuda(),
+			    feats_depth[24],
+			    nn.BatchNorm2d(512),
+			    feats_depth[25],
+			    feats_depth[26],
+			    nn.BatchNorm2d(512),
+			    feats_depth[27],
+			    feats_depth[28],
+			    nn.BatchNorm2d(512),
+			    feats_depth[29],
 			) 
-		if  rgb_d :
+		if  rgb_dec :
 		
 			####  RGB DECODER  ####
 			self.CBR5_Dec = nn.Sequential (        
-			nn.Conv2d(512, 512, kernel_size=3, padding=1).cuda(),
-			nn.BatchNorm2d(512, momentum= batchNorm_momentum).cuda(),
-			nn.ReLU().cuda(),
-			nn.Conv2d(512, 512, kernel_size=3, padding=1).cuda(),
-			nn.BatchNorm2d(512, momentum= batchNorm_momentum).cuda(),
-			nn.ReLU().cuda(),
-			nn.Conv2d(512, 512, kernel_size=3, padding=1).cuda(),
-			nn.BatchNorm2d(512, momentum= batchNorm_momentum).cuda(),
-			nn.ReLU().cuda(),
-			nn.Dropout(p=0.5).cuda(),
+			nn.Conv2d(512, 512, kernel_size=3, padding=1),
+			nn.BatchNorm2d(512, momentum= batchNorm_momentum),
+			nn.ReLU(),
+			nn.Conv2d(512, 512, kernel_size=3, padding=1),
+			nn.BatchNorm2d(512, momentum= batchNorm_momentum),
+			nn.ReLU(),
+			nn.Conv2d(512, 512, kernel_size=3, padding=1),
+			nn.BatchNorm2d(512, momentum= batchNorm_momentum),
+			nn.ReLU(),
+			nn.Dropout(p=0.5),
 			)
 
 			self.CBR4_Dec = nn.Sequential (        
-			nn.Conv2d(512, 512, kernel_size=3, padding=1).cuda(),
-			nn.BatchNorm2d(512, momentum= batchNorm_momentum).cuda(),
-			nn.ReLU().cuda(),
-			nn.Conv2d(512, 512, kernel_size=3, padding=1).cuda(),
-			nn.BatchNorm2d(512, momentum= batchNorm_momentum).cuda(),
-			nn.ReLU().cuda(),
-			nn.Conv2d(512, 256, kernel_size=3, padding=1).cuda(),
-			nn.BatchNorm2d(256, momentum= batchNorm_momentum).cuda(),
-			nn.ReLU().cuda(),
-			nn.Dropout(p=0.5).cuda(),
+			nn.Conv2d(512, 512, kernel_size=3, padding=1),
+			nn.BatchNorm2d(512, momentum= batchNorm_momentum),
+			nn.ReLU(),
+			nn.Conv2d(512, 512, kernel_size=3, padding=1),
+			nn.BatchNorm2d(512, momentum= batchNorm_momentum),
+			nn.ReLU(),
+			nn.Conv2d(512, 256, kernel_size=3, padding=1),
+			nn.BatchNorm2d(256, momentum= batchNorm_momentum),
+			nn.ReLU(),
+			nn.Dropout(p=0.5),
 			)
 
 			self.CBR3_Dec = nn.Sequential (        
-			nn.Conv2d(256, 256, kernel_size=3, padding=1).cuda(),
-			nn.BatchNorm2d(256, momentum= batchNorm_momentum).cuda(),
-			nn.ReLU().cuda(),
-			nn.Conv2d(256, 256, kernel_size=3, padding=1).cuda(),
-			nn.BatchNorm2d(256, momentum= batchNorm_momentum).cuda(),
-			nn.ReLU().cuda(),
-			nn.Conv2d(256,  128, kernel_size=3, padding=1).cuda(),
-			nn.BatchNorm2d(128, momentum= batchNorm_momentum).cuda(),
-			nn.ReLU().cuda(),
-			nn.Dropout(p=0.5).cuda(),
+			nn.Conv2d(256, 256, kernel_size=3, padding=1),
+			nn.BatchNorm2d(256, momentum= batchNorm_momentum),
+			nn.ReLU(),
+			nn.Conv2d(256, 256, kernel_size=3, padding=1),
+			nn.BatchNorm2d(256, momentum= batchNorm_momentum),
+			nn.ReLU(),
+			nn.Conv2d(256,  128, kernel_size=3, padding=1),
+			nn.BatchNorm2d(128, momentum= batchNorm_momentum),
+			nn.ReLU(),
+			nn.Dropout(p=0.5),
 			)
 
 			self.CBR2_Dec = nn.Sequential (
-			nn.Conv2d(128, 128, kernel_size=3, padding=1).cuda(),
-			nn.BatchNorm2d(128, momentum= batchNorm_momentum).cuda(),
-			nn.ReLU().cuda(),
-			nn.Conv2d(128, 64, kernel_size=3, padding=1).cuda(),
-			nn.BatchNorm2d(64, momentum= batchNorm_momentum).cuda(),
-			nn.ReLU().cuda(),
+			nn.Conv2d(128, 128, kernel_size=3, padding=1),
+			nn.BatchNorm2d(128, momentum= batchNorm_momentum),
+			nn.ReLU(),
+			nn.Conv2d(128, 64, kernel_size=3, padding=1),
+			nn.BatchNorm2d(64, momentum= batchNorm_momentum),
+			nn.ReLU(),
 			)
 
 			self.CBR1_Dec = nn.Sequential (                
-			nn.Conv2d(64, 64, kernel_size=3, padding=1).cuda(),
-			nn.BatchNorm2d(64, momentum= batchNorm_momentum).cuda(),
-			nn.ReLU().cuda(),        	
-			nn.Conv2d(64, num_labels, kernel_size=3, padding=1).cuda(),
+			nn.Conv2d(64, 64, kernel_size=3, padding=1),
+			nn.BatchNorm2d(64, momentum= batchNorm_momentum),
+			nn.ReLU(),        	
+			nn.Conv2d(64, num_labels, kernel_size=3, padding=1),
 			)
 
 	def forward(self, rgb_inputs,depth_inputs):
 		
 		########  DEPTH ENCODER  ########
-
+		print rgb_inputs.shape
+		print depth_inputs.shape
 		# Stage 1
 		x = self.conv11d(depth_inputs)
 		x_1 = self.CBR1_D(x)
@@ -361,13 +365,12 @@ class FusenetGenerator(nn.Module):
 class SegmantationLoss(nn.Module):
 	def __init__(self):
 		super(SegmantationLoss, self).__init__()
-		
+	        self.weights =torch.cuda.FloatTensor([0.272491, 0.568953, 0.432069, 0.354511, 0.82178, 0.506488, 1.133686, 0.81217, 0.789383, 0.380358, 1.650497, 1, 0.650831, 0.757218, 0.950049, 0.614332, 0.483815, 1.842002, 0.635787, 1.176839, 1.196984, 1.111907, 1.927519, 0.695354, 1.057833, 4.179196, 1.571971, 0.432408, 3.705966, 0.549132, 1.282043, 2.329812, 0.992398, 3.114945, 5.466101, 1.085242, 6.968411, 1.093939, 1.33652, 1.228912])	
 		self.loss = nn.CrossEntropyLoss()
-
-	def __call__(self, output, target, weights=None,pixel_average=True):
+	def __call__(self, output, target,pixel_average=True):
 		if pixel_average:
-			 self.loss(output, target, weights=weights,size_average=False) / target_mask.data.sum()
+			 return self.loss(output, target) #/ target.data.sum()
 		else:
-			return self.loss(output, target, weights=weights,size_average=False)
+			return self.loss(output, target)
 		
 		

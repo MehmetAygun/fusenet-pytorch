@@ -10,17 +10,14 @@ if __name__ == '__main__':
 	dataset = data_loader.load_data()
 	dataset_size = len(data_loader)
 	print('#training images = %d' % dataset_size)
-
 	model = create_model(opt)
 	model.setup(opt)
 	visualizer = Visualizer(opt)
 	total_steps = 0
-
 	for epoch in range(opt.epoch_count, opt.niter + opt.niter_decay + 1):
 		epoch_start_time = time.time()
 		iter_data_time = time.time()
 		epoch_iter = 0
-
 		for i, data in enumerate(dataset):
 			iter_start_time = time.time()
 			if total_steps % opt.print_freq == 0:
