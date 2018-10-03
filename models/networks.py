@@ -44,6 +44,7 @@ def get_scheduler(optimizer, opt):
 
 
 def init_weights(net, init_type='normal', gain=0.02):
+	net = net
 	def init_func(m):
 		classname = m.__class__.__name__
 		if hasattr(m, 'weight') and (classname.find('Conv') != -1 or classname.find('Linear') != -1):
@@ -64,7 +65,6 @@ def init_weights(net, init_type='normal', gain=0.02):
 		elif classname.find('BatchNorm2d') != -1:
 			init.normal_(m.weight.data, 1.0, gain)
 			init.constant_(m.bias.data, 0.0)
-
 	print('initialize network with %s' % init_type)
 	net.apply(init_func)
 
@@ -74,10 +74,16 @@ def init_net(net, init_type='normal', init_gain=0.02, gpu_ids=[]):
 		assert(torch.cuda.is_available())
 		net.to(gpu_ids[0])
 		net = torch.nn.DataParallel(net, gpu_ids)
-	init_weights(net, init_type, gain=init_gain)
+
+	for root_child in net.children():
+		for children in root_child.children():
+			if children in root_child.need_initialization:
+				init_weights(children, init_type, gain=init_gain)
+			else:
+				init_weights(children,"pretrained",gain=init_gain) #for batchnorms
 	return net
 
-def define_FuseNet(rgb_enc=True, depth_enc=True, rgb_dec=True, depth_dec=False, norm='batch', use_dropout=True, init_type='pretrained', init_gain=0.02, gpu_ids=[]):
+def define_FuseNet(rgb_enc=True, depth_enc=True, rgb_dec=True, depth_dec=False, norm='batch', use_dropout=True, init_type='xavier', init_gain=0.02, gpu_ids=[]):
 	net = None
 	norm_layer = get_norm_layer(norm_type=norm)
 
@@ -94,11 +100,14 @@ class FusenetGenerator(nn.Module):
 		super(FusenetGenerator, self).__init__()
 		batchNorm_momentum = 0.1#TODO:make param
 		num_labels = 40 #TODO:make parame
+		
+		self.need_initialization = [] #modules that need initialization
+		
 		if rgb_enc :
 			feats_rgb = list(torchvision.models.vgg16(pretrained=True).features.children())
 		
 			##### RGB ENCODER ####
-			self.CBR1_RGB = nn.Sequential (
+			self.CBR1_RGB_ENC = nn.Sequential (
 			    feats_rgb[0],
 			    nn.BatchNorm2d(64),
 			    feats_rgb[1],
@@ -107,7 +116,7 @@ class FusenetGenerator(nn.Module):
 			    feats_rgb[3],
 			)
 
-			self.CBR2_RGB = nn.Sequential (
+			self.CBR2_RGB_ENC = nn.Sequential (
 			    feats_rgb[5],
 			    nn.BatchNorm2d(128),
 			    feats_rgb[6],
@@ -116,7 +125,7 @@ class FusenetGenerator(nn.Module):
 			    feats_rgb[8],
 			)
 
-			self.CBR3_RGB = nn.Sequential (        
+			self.CBR3_RGB_ENC = nn.Sequential (        
 			    feats_rgb[10],
 			    nn.BatchNorm2d(256),
 			    feats_rgb[11],
@@ -130,7 +139,7 @@ class FusenetGenerator(nn.Module):
 
 			self.dropout3 = nn.Dropout(p=0.5)
 
-			self.CBR4_RGB = nn.Sequential (
+			self.CBR4_RGB_ENC = nn.Sequential (
 			    feats_rgb[17],
 			    nn.BatchNorm2d(512),
 			    feats_rgb[18],
@@ -144,7 +153,7 @@ class FusenetGenerator(nn.Module):
 
 			self.dropout4 = nn.Dropout(p=0.5)
 
-			self.CBR5_RGB = nn.Sequential (        
+			self.CBR5_RGB_ENC = nn.Sequential (        
 			    feats_rgb[24],
 			    nn.BatchNorm2d(512),
 			    feats_rgb[25],
@@ -163,18 +172,19 @@ class FusenetGenerator(nn.Module):
 
 			feats_depth = list(torchvision.models.vgg16(pretrained=True).features.children())
 			avg = torch.mean(feats_depth[0].weight.data, dim=1)
-		
+			avg = avg.unsqueeze(1)
+			
 			self.conv11d = nn.Conv2d(1, 64, kernel_size=3,padding=1)
-			#self.conv11d.weight.data = avg 
+			self.conv11d.weight.data = avg 
 
-			self.CBR1_D = nn.Sequential(
+			self.CBR1_DEPTH_ENC = nn.Sequential(
 			    nn.BatchNorm2d(64),
 			    feats_depth[1],
 			    feats_depth[2],
 			    nn.BatchNorm2d(64),
 			    feats_depth[3],
 			)
-			self.CBR2_D = nn.Sequential(
+			self.CBR2_DEPTH_ENC = nn.Sequential(
 			    feats_depth[5],
 			    nn.BatchNorm2d(128),
 			    feats_depth[6],
@@ -182,7 +192,7 @@ class FusenetGenerator(nn.Module):
 			    nn.BatchNorm2d(128),
 			    feats_depth[8],
 			)
-			self.CBR3_D = nn.Sequential(
+			self.CBR3_DEPTH_ENC = nn.Sequential(
 			    feats_depth[10],
 			    nn.BatchNorm2d(256),
 			    feats_depth[11],
@@ -196,7 +206,7 @@ class FusenetGenerator(nn.Module):
 
 			self.dropout3_d = nn.Dropout(p=0.5)
 
-			self.CBR4_D = nn.Sequential(
+			self.CBR4_DEPTH_ENC = nn.Sequential(
 			    feats_depth[17],
 			    nn.BatchNorm2d(512),
 			    feats_depth[18],
@@ -210,7 +220,7 @@ class FusenetGenerator(nn.Module):
 
 			self.dropout4_d = nn.Dropout(p=0.5)
 
-			self.CBR5_D = nn.Sequential(
+			self.CBR5_DEPTH_ENC = nn.Sequential(
 			    feats_depth[24],
 			    nn.BatchNorm2d(512),
 			    feats_depth[25],
@@ -224,7 +234,7 @@ class FusenetGenerator(nn.Module):
 		if  rgb_dec :
 		
 			####  RGB DECODER  ####
-			self.CBR5_Dec = nn.Sequential (        
+			self.CBR5_RGB_DEC = nn.Sequential (        
 			nn.Conv2d(512, 512, kernel_size=3, padding=1),
 			nn.BatchNorm2d(512, momentum= batchNorm_momentum),
 			nn.ReLU(),
@@ -237,7 +247,9 @@ class FusenetGenerator(nn.Module):
 			nn.Dropout(p=0.5),
 			)
 
-			self.CBR4_Dec = nn.Sequential (        
+			self.need_initialization.append(self.CBR5_RGB_DEC)
+
+			self.CBR4_RGB_DEC = nn.Sequential (        
 			nn.Conv2d(512, 512, kernel_size=3, padding=1),
 			nn.BatchNorm2d(512, momentum= batchNorm_momentum),
 			nn.ReLU(),
@@ -250,7 +262,9 @@ class FusenetGenerator(nn.Module):
 			nn.Dropout(p=0.5),
 			)
 
-			self.CBR3_Dec = nn.Sequential (        
+			self.need_initialization.append(self.CBR4_RGB_DEC)
+
+			self.CBR3_RGB_DEC = nn.Sequential (        
 			nn.Conv2d(256, 256, kernel_size=3, padding=1),
 			nn.BatchNorm2d(256, momentum= batchNorm_momentum),
 			nn.ReLU(),
@@ -262,8 +276,10 @@ class FusenetGenerator(nn.Module):
 			nn.ReLU(),
 			nn.Dropout(p=0.5),
 			)
+					
+			self.need_initialization.append(self.CBR3_RGB_DEC)
 
-			self.CBR2_Dec = nn.Sequential (
+			self.CBR2_RGB_DEC = nn.Sequential (
 			nn.Conv2d(128, 128, kernel_size=3, padding=1),
 			nn.BatchNorm2d(128, momentum= batchNorm_momentum),
 			nn.ReLU(),
@@ -272,66 +288,68 @@ class FusenetGenerator(nn.Module):
 			nn.ReLU(),
 			)
 
-			self.CBR1_Dec = nn.Sequential (                
+			self.need_initialization.append(self.CBR2_RGB_DEC)
+
+			self.CBR1_RGB_DEC = nn.Sequential (                
 			nn.Conv2d(64, 64, kernel_size=3, padding=1),
 			nn.BatchNorm2d(64, momentum= batchNorm_momentum),
 			nn.ReLU(),        	
 			nn.Conv2d(64, num_labels, kernel_size=3, padding=1),
 			)
+		
+			self.need_initialization.append(self.CBR1_RGB_DEC)
 
 	def forward(self, rgb_inputs,depth_inputs):
 		
 		########  DEPTH ENCODER  ########
-		print rgb_inputs.shape
-		print depth_inputs.shape
 		# Stage 1
 		x = self.conv11d(depth_inputs)
-		x_1 = self.CBR1_D(x)
+		x_1 = self.CBR1_DEPTH_ENC(x)
 		x, id1_d = F.max_pool2d(x_1, kernel_size=2, stride=2, return_indices=True)
 		
 		# Stage 2
-		x_2 = self.CBR2_D(x)
+		x_2 = self.CBR2_DEPTH_ENC(x)
 		x, id2_d = F.max_pool2d(x_2, kernel_size=2, stride=2, return_indices=True)
 
 		# Stage 3
-		x_3 = self.CBR3_D(x)
+		x_3 = self.CBR3_DEPTH_ENC(x)
 		x, id3_d = F.max_pool2d(x_3, kernel_size=2, stride=2, return_indices=True)
 		x = self.dropout3_d(x)
 
 		# Stage 4
-		x_4 = self.CBR4_D(x)
+		x_4 = self.CBR4_DEPTH_ENC(x)
 		x, id4_d = F.max_pool2d(x_4, kernel_size=2, stride=2, return_indices=True)
 		x = self.dropout4_d(x)
 
 		# Stage 5
-		x_5 = self.CBR5_D(x)
+		x_5 = self.CBR5_DEPTH_ENC(x)
 
 		########  RGB ENCODER  ########
 
 		# Stage 1
-		y = self.CBR1_RGB(rgb_inputs)
+		y = self.CBR1_RGB_ENC(rgb_inputs)
 		y = torch.add(y,x_1)
 		y, id1 = F.max_pool2d(y, kernel_size=2, stride=2, return_indices=True)
 
 		# Stage 2
-		y = self.CBR2_RGB(y)
+		y = self.CBR2_RGB_ENC(y)
 		y = torch.add(y,x_2)
 		y, id2 = F.max_pool2d(y, kernel_size=2, stride=2, return_indices=True)
 
 		# Stage 3
-		y = self.CBR3_RGB(y)
+		y = self.CBR3_RGB_ENC(y)
 		y = torch.add(y,x_3)
 		y, id3 = F.max_pool2d(y, kernel_size=2, stride=2, return_indices=True)
 		y = self.dropout3(y)
 
 		# Stage 4
-		y = self.CBR4_RGB(y)
+		y = self.CBR4_RGB_ENC(y)
 		y = torch.add(y,x_4)
 		y, id4 = F.max_pool2d(y, kernel_size=2, stride=2, return_indices=True)
 		y = self.dropout4(y)
 
 		# Stage 5
-		y = self.CBR5_RGB(y)
+		y = self.CBR5_RGB_ENC(y)
 		y = torch.add(y,x_5)
 		y_size = y.size() 
 
@@ -342,23 +360,23 @@ class FusenetGenerator(nn.Module):
 
 		# Stage 5 dec
 		y = F.max_unpool2d(y, id5, kernel_size=2, stride=2, output_size=y_size)
-		y = self.CBR5_Dec(y)
+		y = self.CBR5_RGB_DEC(y)
 
 		# Stage 4 dec
 		y = F.max_unpool2d(y, id4, kernel_size=2, stride=2)
-		y = self.CBR4_Dec(y)
+		y = self.CBR4_RGB_DEC(y)
 
 		# Stage 3 dec
 		y = F.max_unpool2d(y, id3, kernel_size=2, stride=2)
-		y = self.CBR3_Dec(y)
+		y = self.CBR3_RGB_DEC(y)
 
 		# Stage 2 dec
 		y = F.max_unpool2d(y, id2, kernel_size=2, stride=2)
-		y = self.CBR2_Dec(y)
+		y = self.CBR2_RGB_DEC(y)
 
 		# Stage 1 dec
 		y = F.max_unpool2d(y, id1, kernel_size=2, stride=2)
-		y = self.CBR1_Dec(y)
+		y = self.CBR1_RGB_DEC(y)
 
 		return y
 		
