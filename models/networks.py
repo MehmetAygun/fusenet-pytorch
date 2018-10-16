@@ -178,7 +178,8 @@ class FusenetGenerator(nn.Module):
 			self.conv11d.weight.data = avg 
 
 			self.CBR1_DEPTH_ENC = nn.Sequential(
-			    nn.BatchNorm2d(64),
+			    self.conv11d,
+                            nn.BatchNorm2d(64),
 			    feats_depth[1],
 			    feats_depth[2],
 			    nn.BatchNorm2d(64),
@@ -276,7 +277,7 @@ class FusenetGenerator(nn.Module):
 			nn.ReLU(),
 			nn.Dropout(p=0.5),
 			)
-					
+
 			self.need_initialization.append(self.CBR3_RGB_DEC)
 
 			self.CBR2_RGB_DEC = nn.Sequential (
@@ -296,17 +297,17 @@ class FusenetGenerator(nn.Module):
 			nn.ReLU(),        	
 			nn.Conv2d(64, num_labels, kernel_size=3, padding=1),
 			)
-		
+
 			self.need_initialization.append(self.CBR1_RGB_DEC)
 
 	def forward(self, rgb_inputs,depth_inputs):
-		
+
 		########  DEPTH ENCODER  ########
 		# Stage 1
-		x = self.conv11d(depth_inputs)
-		x_1 = self.CBR1_DEPTH_ENC(x)
+		#x = self.conv11d(depth_inputs)
+		x_1 = self.CBR1_DEPTH_ENC(depth_inputs)
 		x, id1_d = F.max_pool2d(x_1, kernel_size=2, stride=2, return_indices=True)
-		
+
 		# Stage 2
 		x_2 = self.CBR2_DEPTH_ENC(x)
 		x, id2_d = F.max_pool2d(x_2, kernel_size=2, stride=2, return_indices=True)
@@ -351,7 +352,7 @@ class FusenetGenerator(nn.Module):
 		# Stage 5
 		y = self.CBR5_RGB_ENC(y)
 		y = torch.add(y,x_5)
-		y_size = y.size() 
+		y_size = y.size()
 
 		y, id5 = F.max_pool2d(y, kernel_size=2, stride=2, return_indices=True)
 		y = self.dropout5(y)
@@ -383,8 +384,7 @@ class FusenetGenerator(nn.Module):
 class SegmantationLoss(nn.Module):
 	def __init__(self):
 		super(SegmantationLoss, self).__init__()
-	        self.weights =torch.cuda.FloatTensor([0.272491, 0.568953, 0.432069, 0.354511, 0.82178, 0.506488, 1.133686, 0.81217, 0.789383, 0.380358, 1.650497, 1, 0.650831, 0.757218, 0.950049, 0.614332, 0.483815, 1.842002, 0.635787, 1.176839, 1.196984, 1.111907, 1.927519, 0.695354, 1.057833, 4.179196, 1.571971, 0.432408, 3.705966, 0.549132, 1.282043, 2.329812, 0.992398, 3.114945, 5.466101, 1.085242, 6.968411, 1.093939, 1.33652, 1.228912])	
-		self.loss = nn.CrossEntropyLoss()
+		self.loss = nn.CrossEntropyLoss(ignore_index=0)
 	def __call__(self, output, target,pixel_average=True):
 		if pixel_average:
 			 return self.loss(output, target) #/ target.data.sum()

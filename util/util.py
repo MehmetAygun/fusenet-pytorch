@@ -19,6 +19,14 @@ def tensor2im(input_image, imtype=np.uint8):
     return image_numpy.astype(imtype)
 
 
+def tensor2labelim(label_tensor, impalette, imtype=np.uint8):
+    label_numpy = label_tensor[0].cpu().float().numpy()[0]
+    label_image = Image.fromarray(label_numpy.astype(np.uint8))
+    label_image = label_image.convert("P")
+    label_image.putpalette(impalette)
+    label_image = label_image.convert("RGB")
+    return np.array(label_image).astype(imtype)
+
 def diagnose_network(net, name='network'):
     mean = 0.0
     count = 0
@@ -58,3 +66,16 @@ def mkdirs(paths):
 def mkdir(path):
     if not os.path.exists(path):
         os.makedirs(path)
+
+def confusion_matrix(x , y, n, ignore_label=None, mask=None):
+        if mask is None:
+            mask = np.ones_like(x) == 1
+        k = (x >= 0) & (y < n) & (x != ignore_label) & (mask.astype(np.bool))
+        return np.bincount(n * x[k].astype(int) + y[k], minlength=n**2).reshape(n, n)
+
+def getScores(conf_matrix):
+        with np.errstate(divide='ignore',invalid='ignore'):
+            overall = np.diag(conf_matrix).sum() / conf_matrix.sum()
+            perclass = np.diag(conf_matrix) / conf_matrix.sum(1)
+            IU = np.diag(conf_matrix) / (conf_matrix.sum(1) + conf_matrix.sum(0) -np.diag(conf_matrix))
+        return overall * 100., np.nanmean(perclass) * 100., np.nanmean(IU) * 100.

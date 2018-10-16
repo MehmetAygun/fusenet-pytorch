@@ -49,6 +49,12 @@ class BaseModel():
             if isinstance(name, str):
                 net = getattr(self, 'net' + name)
                 net.eval()
+    def train(self):
+        for name in self.model_names:
+            if isinstance(name, str):
+                net = getattr(self, 'net' + name)
+                net.train()
+
 
     # used in test time, wrapping `forward` in no_grad() so we don't save
     # intermediate steps for backprop

@@ -2,7 +2,7 @@ import torch
 from util.image_pool import ImagePool
 from .base_model import BaseModel
 from . import networks
-
+import numpy as np
 
 class FuseNetModel(BaseModel):
 	def name(self):
@@ -32,7 +32,9 @@ class FuseNetModel(BaseModel):
                 # define loss functions
 		self.criterionSegmentation = networks.SegmantationLoss().to(self.device)
 
-		if self.isTrain:
+                self.impalette = list(np.genfromtxt(opt.dataroot+'/palette.txt',dtype=np.uint8).reshape(3*256))
+
+                if self.isTrain:
                 #self.criterionL1 = torch.nn.L1Loss()
 
 			# initialize optimizers

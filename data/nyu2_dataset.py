@@ -19,7 +19,7 @@ class Nyu2Dataset(BaseDataset):
 		self.root = opt.dataroot # path for nyu2.npy
 		self.nyu2 = np.load("{}/{}".format(self.root,"nyu2.npy")).tolist()
 		splits = sio.loadmat("{}/{}".format(self.root,"splits.mat"))
-		self.indexes = [x[0] for x in splits["trainNdxs"]] if opt.phase == "train" else [x[0] for x in splits["testNdxs"]]
+		self.indexes = [x[0] - 1  for x in splits["trainNdxs"]] if opt.phase == "train" else [x[0] -1 for x in splits["testNdxs"]]
 		assert(opt.resize_or_crop == 'resize_and_crop')
 
 	def __getitem__(self, index):
