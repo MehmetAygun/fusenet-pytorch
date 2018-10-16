@@ -3,6 +3,7 @@ from options.train_options import TrainOptions
 from data import CreateDataLoader
 from models import create_model
 from util.visualizer import Visualizer
+from util.visualize_mask import *
 
 if __name__ == '__main__':
 	opt = TrainOptions().parse()
@@ -26,7 +27,7 @@ if __name__ == '__main__':
 			total_steps += opt.batch_size
 			epoch_iter += opt.batch_size
 			model.set_input(data)
-			model.optimize_parameters()
+                        model.optimize_parameters()
 
 			if total_steps % opt.display_freq == 0:
 				save_result = total_steps % opt.update_html_freq == 0
