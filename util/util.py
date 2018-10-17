@@ -20,7 +20,10 @@ def tensor2im(input_image, imtype=np.uint8):
 
 
 def tensor2labelim(label_tensor, impalette, imtype=np.uint8):
-    label_numpy = label_tensor[0].cpu().float().numpy()[0]
+    if len(label_tensor.shape) == 4:
+        _, label_tensor = torch.max(label_tensor.data.cpu(), 1)
+
+    label_numpy = label_tensor[0].cpu().float().detach().numpy()
     label_image = Image.fromarray(label_numpy.astype(np.uint8))
     label_image = label_image.convert("P")
     label_image.putpalette(impalette)
