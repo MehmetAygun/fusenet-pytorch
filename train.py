@@ -4,6 +4,7 @@ from data import CreateDataLoader
 from models import create_model
 from util.visualizer import Visualizer
 from util.visualize_mask import *
+from util.util import confusion_matrix,getScores
 import numpy as np
 
 if __name__ == '__main__':
@@ -64,15 +65,34 @@ if __name__ == '__main__':
 
 		print('End of epoch %d / %d \t Time Taken: %d sec' %   (epoch, train_opt.niter + train_opt.niter_decay, time.time() - epoch_start_time))
 		model.update_learning_rate()
-                if epoch % 10 == 0:
+                if epoch % 5 == 0:
                     model.eval()
                     test_loss_iter = []
+                    gts = None
+                    preds = None
                     with torch.no_grad():
                         for i, data in enumerate(test_dataset):
                             model.set_input(data)
                             model.forward()
                             model.get_loss()
-                            test_loss_iter.append(model.loss_segmentation)
-                        avg_test_loss = np.mean(test_loss_iter)
-                        print ('Epoch {} loss {}: '.format(epoch, avg_test_loss))
 
+                            gt = model.mask.cpu().int().numpy()
+                            _, pred = torch.max(model.output.data.cpu(), 1)
+                            pred = pred.float().detach().int().numpy()
+                            if gts is None:
+                                gts = gt
+                                preds = pred
+                            else :
+                                gts = np.concatenate((gts, gt), axis=0)
+                                preds = np.concatenate((preds, pred), axis=0)
+                            visualizer.display_current_results(model.get_current_visuals(), epoch, False)
+
+                            test_loss_iter.append(model.loss_segmentation)
+
+                        avg_test_loss = np.mean(test_loss_iter)
+                        print ('Epoch {} test loss {}: '.format(epoch, avg_test_loss))
+
+                        print (gts.shape)
+                        conf_mat = confusion_matrix(gts,preds,40,ignore_label=0)
+                        glob,mean,iou = getScores(conf_mat)
+                        print ('Epoch {} glob acc : {}, mean acc : {}, IoU : {}'.format(epoch,glob,mean,iou))
