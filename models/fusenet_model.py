@@ -52,7 +52,6 @@ class FuseNetModel(BaseModel):
 		self.output = self.netFuseNet(self.rgb_image,self.depth_image)
 
         def get_loss(self):
-
                 self.loss_segmentation = self.criterionSegmentation(self.output, self.mask)
 
         def backward(self):

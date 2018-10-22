@@ -70,12 +70,13 @@ if __name__ == '__main__':
                     test_loss_iter = []
                     gts = None
                     preds = None
+                    epoch_iter = 0
                     with torch.no_grad():
                         for i, data in enumerate(test_dataset):
                             model.set_input(data)
                             model.forward()
                             model.get_loss()
-
+                            epoch_iter =+ test_opt.batch_size
                             gt = model.mask.cpu().int().numpy()
                             _, pred = torch.max(model.output.data.cpu(), 1)
                             pred = pred.float().detach().int().numpy()
@@ -86,13 +87,11 @@ if __name__ == '__main__':
                                 gts = np.concatenate((gts, gt), axis=0)
                                 preds = np.concatenate((preds, pred), axis=0)
                             visualizer.display_current_results(model.get_current_visuals(), epoch, False)
-
+                            losses = model.get_current_losses()
                             test_loss_iter.append(model.loss_segmentation)
 
                         avg_test_loss = np.mean(test_loss_iter)
                         print ('Epoch {} test loss {}: '.format(epoch, avg_test_loss))
-
-                        print (gts.shape)
                         conf_mat = confusion_matrix(gts,preds,40,ignore_label=0)
                         glob,mean,iou = getScores(conf_mat)
                         print ('Epoch {} glob acc : {}, mean acc : {}, IoU : {}'.format(epoch,glob,mean,iou))

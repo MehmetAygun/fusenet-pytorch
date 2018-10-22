@@ -78,7 +78,7 @@ def confusion_matrix(x , y, n, ignore_label=None, mask=None):
 
 def getScores(conf_matrix):
         with np.errstate(divide='ignore',invalid='ignore'):
-            overall = np.diag(conf_matrix).sum() / conf_matrix.sum()
-            perclass = np.diag(conf_matrix) / conf_matrix.sum(1)
-            IU = np.diag(conf_matrix) / (conf_matrix.sum(1) + conf_matrix.sum(0) -np.diag(conf_matrix))
+            overall = 1.0*np.diag(conf_matrix).sum() / conf_matrix.sum()
+            perclass = 1.0* np.diag(conf_matrix) / conf_matrix.sum(1)
+            IU = 1.0*np.diag(conf_matrix) / (conf_matrix.sum(1) + conf_matrix.sum(0) -np.diag(conf_matrix))
         return overall * 100., np.nanmean(perclass) * 100., np.nanmean(IU) * 100.
