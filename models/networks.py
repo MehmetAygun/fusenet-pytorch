@@ -6,9 +6,6 @@ import functools
 from torch.optim import lr_scheduler
 import torch.nn.functional as F
 
-torch.backends.cudnn.deterministic = True
-torch.manual_seed(2)
-
 ###############################################################################
 # Helper Functions
 ###############################################################################
