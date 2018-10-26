@@ -6,9 +6,9 @@ from data.base_dataset import BaseDataset
 from data.image_folder import make_dataset
 from PIL import Image
 import numpy as np
-import scipy.io as sio
+import pickle
 
-class Nyu2Dataset(BaseDataset):
+class sunrgbddataset(BaseDataset):
 	@staticmethod
 	def modify_commandline_options(parser, is_train):
 		return parser
@@ -16,24 +16,24 @@ class Nyu2Dataset(BaseDataset):
 	def initialize(self, opt):
 		self.opt = opt
 		self.batch_size = opt.batch_size
-		self.root = opt.dataroot # path for nyu2.npy
-		self.nyu2 = np.load("{}/{}".format(self.root,"nyu2.npy")).tolist()
-		splits = sio.loadmat("{}/{}".format(self.root,"splits.mat"))
-		self.indexes = [x[0] - 1  for x in splits["trainNdxs"]] if opt.phase == "train" else [x[0] -1 for x in splits["testNdxs"]]
-		self.num_labels = 40
+		self.root = opt.dataroot # path for the dataset
+		splits = pickle.load(open(os.path.join(self.root, "splits.pkl"), "rb"), encoding="latin1")
+		self.indexes = splits["trainval"] if opt.phase == "train" else splits["test"]
+		self.num_labels = 38
 		self.ignore_label = 0
-		self.class_weights = None
-		assert(opt.resize_or_crop == 'resize_and_crop')
+		self.class_weights = torch.from_numpy(np.loadtxt(os.path.join(opt.dataroot, "class_weights"),
+														delimiter=',').astype(np.float32)
+											)
+		assert(opt.resize_or_crop == 'none')
 
 	def __getitem__(self, index):
 		index = self.indexes[index]
-		rgb_image = np.array(self.nyu2["rgb_images"][index],dtype=np.uint8)
-		depth_image = self.nyu2["depth_images"][index]
-		depth_image = np.expand_dims(depth_image,axis=2)
-		mask = np.array(self.nyu2["masks"][index],dtype=np.uint8)
+		rgb_image = np.array(Image.open(os.path.join(self.root, "images-224", str(index)+".png")))
+		depth_image = np.array(Image.open(os.path.join(self.root, "depth-inpaint-u8-224", str(index)+".png")))
+		mask = np.array(Image.open(os.path.join(self.root, "seglabel-224", str(index)+".png")))
 
 		rgb_image = transforms.ToTensor()(rgb_image)
-		depth_image = transforms.ToTensor()(depth_image)
+		depth_image = transforms.ToTensor()(depth_image[:, :, np.newaxis])
 
 		mask = torch.from_numpy(mask)
 		mask = mask.type(torch.LongTensor)
@@ -52,4 +52,4 @@ class Nyu2Dataset(BaseDataset):
 		return len(self.indexes)
 
 	def name(self):
-		return 'Nyu2Dataset'
+		return 'SunRGBD'

@@ -31,9 +31,9 @@ def get_option_setter(model_name):
     return model_class.modify_commandline_options
 
 
-def create_model(opt):
+def create_model(opt, dataset):
     model = find_model_using_name(opt.model)
     instance = model()
-    instance.initialize(opt)
+    instance.initialize(opt, dataset)
     print("model [%s] was created" % (instance.name()))
     return instance

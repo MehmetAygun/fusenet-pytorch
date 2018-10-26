@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 from torch.nn import init
-import torchvision 
+import torchvision
 import functools
 from torch.optim import lr_scheduler
 import torch.nn.functional as F
@@ -25,9 +25,10 @@ def get_norm_layer(norm_type='instance'):
 
 def get_scheduler(optimizer, opt):
 	if opt.lr_policy == 'lambda':
-		def lambda_rule(epoch):
-			lr_l = 1.0 - max(0, epoch + 1 + opt.epoch_count - opt.niter) / float(opt.niter_decay + 1)
-			return lr_l
+		lambda_rule = lambda epoch: opt.lr_gamma ** ((epoch+1) // opt.lr_decay_epochs)
+		# def lambda_rule(epoch):
+			# lr_l = 1.0 - max(0, epoch + 1 + opt.epoch_count - opt.niter) / float(opt.niter_decay + 1)
+			# return lr_l
 		scheduler = lr_scheduler.LambdaLR(optimizer, lr_lambda=lambda_rule)
 	elif opt.lr_policy == 'step':
 		scheduler = lr_scheduler.StepLR(optimizer,step_size=opt.lr_decay_iters, gamma=0.1)
@@ -80,11 +81,11 @@ def init_net(net, init_type='normal', init_gain=0.02, gpu_ids=[]):
 				init_weights(children,"pretrained",gain=init_gain) #for batchnorms
 	return net
 
-def define_FuseNet(rgb_enc=True, depth_enc=True, rgb_dec=True, depth_dec=False, norm='batch', use_dropout=True, init_type='xavier', init_gain=0.02, gpu_ids=[]):
+def define_FuseNet(num_labels, rgb_enc=True, depth_enc=True, rgb_dec=True, depth_dec=False, norm='batch', use_dropout=True, init_type='xavier', init_gain=0.02, gpu_ids=[]):
 	net = None
 	norm_layer = get_norm_layer(norm_type=norm)
 
-	net = FusenetGenerator(rgb_enc=True, depth_enc=True, rgb_dec=True, depth_dec=False )
+	net = FusenetGenerator(num_labels, rgb_enc=True, depth_enc=True, rgb_dec=True, depth_dec=False )
 	return init_net(net, init_type, init_gain, gpu_ids)
 
 
@@ -93,16 +94,15 @@ def define_FuseNet(rgb_enc=True, depth_enc=True, rgb_dec=True, depth_dec=False, 
 ##############################################################################
 
 class FusenetGenerator(nn.Module):
-	def __init__(self,rgb_enc=True, depth_enc=True, rgb_dec=True, depth_dec=False):
+	def __init__(self, num_labels, rgb_enc=True, depth_enc=True, rgb_dec=True, depth_dec=False):
 		super(FusenetGenerator, self).__init__()
 		batchNorm_momentum = 0.1#TODO:make param
-		num_labels = 40 #TODO:make parame
-		
+
 		self.need_initialization = [] #modules that need initialization
-		
+
 		if rgb_enc :
 			feats_rgb = list(torchvision.models.vgg16(pretrained=True).features.children())
-		
+
 			##### RGB ENCODER ####
 			self.CBR1_RGB_ENC = nn.Sequential (
 			    feats_rgb[0],
@@ -122,7 +122,7 @@ class FusenetGenerator(nn.Module):
 			    feats_rgb[8],
 			)
 
-			self.CBR3_RGB_ENC = nn.Sequential (        
+			self.CBR3_RGB_ENC = nn.Sequential (
 			    feats_rgb[10],
 			    nn.BatchNorm2d(256),
 			    feats_rgb[11],
@@ -150,7 +150,7 @@ class FusenetGenerator(nn.Module):
 
 			self.dropout4 = nn.Dropout(p=0.5)
 
-			self.CBR5_RGB_ENC = nn.Sequential (        
+			self.CBR5_RGB_ENC = nn.Sequential (
 			    feats_rgb[24],
 			    nn.BatchNorm2d(512),
 			    feats_rgb[25],
@@ -163,20 +163,19 @@ class FusenetGenerator(nn.Module):
 			)
 
 			self.dropout5 = nn.Dropout(p=0.5)
-		
+
 
 		if depth_enc :
-
 			feats_depth = list(torchvision.models.vgg16(pretrained=True).features.children())
 			avg = torch.mean(feats_depth[0].weight.data, dim=1)
 			avg = avg.unsqueeze(1)
-			
+
 			self.conv11d = nn.Conv2d(1, 64, kernel_size=3,padding=1)
-			self.conv11d.weight.data = avg 
+			self.conv11d.weight.data = avg
 
 			self.CBR1_DEPTH_ENC = nn.Sequential(
 			    self.conv11d,
-                            nn.BatchNorm2d(64),
+                nn.BatchNorm2d(64),
 			    feats_depth[1],
 			    feats_depth[2],
 			    nn.BatchNorm2d(64),
@@ -228,11 +227,11 @@ class FusenetGenerator(nn.Module):
 			    feats_depth[28],
 			    nn.BatchNorm2d(512),
 			    feats_depth[29],
-			) 
+			)
+
 		if  rgb_dec :
-		
 			####  RGB DECODER  ####
-			self.CBR5_RGB_DEC = nn.Sequential (        
+			self.CBR5_RGB_DEC = nn.Sequential (
 			nn.Conv2d(512, 512, kernel_size=3, padding=1),
 			nn.BatchNorm2d(512, momentum= batchNorm_momentum),
 			nn.ReLU(),
@@ -247,7 +246,7 @@ class FusenetGenerator(nn.Module):
 
 			self.need_initialization.append(self.CBR5_RGB_DEC)
 
-			self.CBR4_RGB_DEC = nn.Sequential (        
+			self.CBR4_RGB_DEC = nn.Sequential (
 			nn.Conv2d(512, 512, kernel_size=3, padding=1),
 			nn.BatchNorm2d(512, momentum= batchNorm_momentum),
 			nn.ReLU(),
@@ -262,7 +261,7 @@ class FusenetGenerator(nn.Module):
 
 			self.need_initialization.append(self.CBR4_RGB_DEC)
 
-			self.CBR3_RGB_DEC = nn.Sequential (        
+			self.CBR3_RGB_DEC = nn.Sequential (
 			nn.Conv2d(256, 256, kernel_size=3, padding=1),
 			nn.BatchNorm2d(256, momentum= batchNorm_momentum),
 			nn.ReLU(),
@@ -288,16 +287,16 @@ class FusenetGenerator(nn.Module):
 
 			self.need_initialization.append(self.CBR2_RGB_DEC)
 
-			self.CBR1_RGB_DEC = nn.Sequential (                
+			self.CBR1_RGB_DEC = nn.Sequential (
 			nn.Conv2d(64, 64, kernel_size=3, padding=1),
 			nn.BatchNorm2d(64, momentum= batchNorm_momentum),
-			nn.ReLU(),        	
+			nn.ReLU(),
 			nn.Conv2d(64, num_labels, kernel_size=3, padding=1),
 			)
 
 			self.need_initialization.append(self.CBR1_RGB_DEC)
 
-	def forward(self, rgb_inputs,depth_inputs):
+	def forward(self, rgb_inputs, depth_inputs):
 
 		########  DEPTH ENCODER  ########
 		# Stage 1
@@ -377,15 +376,28 @@ class FusenetGenerator(nn.Module):
 		y = self.CBR1_RGB_DEC(y)
 
 		return y
-		
+
+class FusenetGeneratorTest(nn.Module):
+	def __init__(self, num_labels, rgb_enc=True, depth_enc=True, rgb_dec=True, depth_dec=False):
+		super(FusenetGenerator, self).__init__()
+		batchNorm_momentum = 0.1#TODO:make param
+		self.c = nn.Conv2d(3, num_labels, kernel_size=3, padding=1)
+		self.need_initialization = []
+
+	def forward(self, rgb_inputs, depth_inputs):
+
+		########  DEPTH ENCODER  ########
+		# Stage 1
+		#x = self.conv11d(depth_inputs)
+		y = self.c(rgb_inputs)
+		return y
+
 class SegmantationLoss(nn.Module):
-	def __init__(self):
+	def __init__(self, ignore_label=None, class_weights=None):
 		super(SegmantationLoss, self).__init__()
-		self.loss = nn.CrossEntropyLoss(ignore_index=0)
-	def __call__(self, output, target,pixel_average=True):
+		self.loss = nn.CrossEntropyLoss(ignore_index=ignore_label, weight=class_weights)
+	def __call__(self, output, target, pixel_average=True):
 		if pixel_average:
 			 return self.loss(output, target) #/ target.data.sum()
 		else:
 			return self.loss(output, target)
-		
-		

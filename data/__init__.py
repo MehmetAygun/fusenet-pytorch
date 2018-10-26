@@ -2,7 +2,7 @@ import importlib
 import torch.utils.data
 from data.base_data_loader import BaseDataLoader
 from data.base_dataset import BaseDataset
-
+import numpy
 
 def find_dataset_using_name(dataset_name):
     # Given the option --dataset_mode [datasetname],
@@ -60,7 +60,8 @@ class CustomDatasetDataLoader(BaseDataLoader):
             self.dataset,
             batch_size=opt.batch_size,
             shuffle=not opt.serial_batches,
-            num_workers=int(opt.num_threads))
+            num_workers=int(opt.num_threads),
+            worker_init_fn=lambda worker_id: numpy.random.seed(opt.seed + worker_id))
 
     def load_data(self):
         return self

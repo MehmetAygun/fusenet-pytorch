@@ -17,7 +17,7 @@ if __name__ == '__main__':
     opt.display_id = -1   # no visdom display
     data_loader = CreateDataLoader(opt)
     dataset = data_loader.load_data()
-    model = create_model(opt)
+    model = create_model(opt, dataset.dataset)
     model.setup(opt)
     # create a website
     web_dir = os.path.join(opt.results_dir, opt.name, '%s_%s' % (opt.phase, opt.epoch))
@@ -25,7 +25,7 @@ if __name__ == '__main__':
 
     model.eval()
     test_loss_iter = []
-    with torch.no_grad(): 
+    with torch.no_grad():
         for i, data in enumerate(dataset):
             if i >= opt.num_test:
                 break
@@ -37,6 +37,4 @@ if __name__ == '__main__':
     # save the website
     webpage.save()
     avg_test_loss = np.mean(test_loss_iter)
-    print avg_test_loss
-
-
+    print (avg_test_loss)
