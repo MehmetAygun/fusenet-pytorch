@@ -76,33 +76,35 @@ if __name__ == '__main__':
 
 		print('End of epoch %d / %d \t Time Taken: %d sec' %   (epoch, train_opt.niter + train_opt.niter_decay, time.time() - epoch_start_time))
 		model.update_learning_rate()
-		if epoch % 5 == 0:
-		    model.eval()
-		    test_loss_iter = []
-		    gts = None
-		    preds = None
-		    epoch_iter = 0
-		    with torch.no_grad():
-		        for i, data in enumerate(test_dataset):
-		            model.set_input(data)
-		            model.forward()
-		            model.get_loss()
-		            epoch_iter =+ test_opt.batch_size
-		            gt = model.mask.cpu().int().numpy()
-		            _, pred = torch.max(model.output.data.cpu(), 1)
-		            pred = pred.float().detach().int().numpy()
-		            if gts is None:
-		                gts = gt
-		                preds = pred
-		            else :
-		                gts = np.concatenate((gts, gt), axis=0)
-		                preds = np.concatenate((preds, pred), axis=0)
-		            visualizer.display_current_results(model.get_current_visuals(), epoch, False)
-		            losses = model.get_current_losses()
-		            test_loss_iter.append(model.loss_segmentation)
+		if epoch > train_opt.niter and epoch % 5 == 0:
+			model.eval()
+			test_loss_iter = []
+			gts = None
+			preds = None
+			epoch_iter = 0
+			with torch.no_grad():
+				for i, data in enumerate(test_dataset):
+					model.set_input(data)
+					model.forward()
+					model.get_loss()
+					epoch_iter += test_opt.batch_size
+					gt = model.mask.cpu().int().numpy()
+					_, pred = torch.max(model.output.data.cpu(), 1)
+					pred = pred.float().detach().int().numpy()
+					if gts is None:
+					    gts = gt
+					    preds = pred
+					else :
+					    gts = np.concatenate((gts, gt), axis=0)
+					    preds = np.concatenate((preds, pred), axis=0)
+					# visualizer.display_current_results(model.get_current_visuals(), epoch, False)
+					losses = model.get_current_losses()
+					test_loss_iter.append(model.loss_segmentation)
+					print('test epoch {0:}, iters: {1:} '.format(epoch, epoch_iter), end='\r')
 
-		        avg_test_loss = np.mean(test_loss_iter)
-		        print ('Epoch {} test loss {}: '.format(epoch, avg_test_loss))
-		        conf_mat = confusion_matrix(gts, preds, dataset.dataset.num_labels, ignore_label=dataset.ignore_label)
-		        glob,mean,iou = getScores(conf_mat)
-		        print ('Epoch {} glob acc : {}, mean acc : {}, IoU : {}'.format(epoch,glob,mean,iou))
+				avg_test_loss = np.mean(test_loss_iter)
+				print ('Epoch {0:} test loss: {1:.3f} '.format(epoch, avg_test_loss))
+				conf_mat = confusion_matrix(gts, preds, train_dataset.dataset.num_labels, ignore_label=train_dataset.dataset.ignore_label)
+				glob,mean,iou = getScores(conf_mat)
+				print ('Epoch {0:} glob acc : {1:.2f}, mean acc : {2:.2f}, IoU : {3:.2f}'.format(epoch, glob, mean, iou))
+				visualizer.save_confusion_matrix(conf_mat, epoch)
