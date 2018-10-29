@@ -17,13 +17,12 @@ class Nyu2Dataset(BaseDataset):
 		self.opt = opt
 		self.batch_size = opt.batch_size
 		self.root = opt.dataroot # path for nyu2.npy
-		self.nyu2 = np.load("{}/{}".format(self.root,"nyu2.npy")).tolist()
+		self.nyu2 = np.load("{}/{}".format(self.root,"nyu2.npy"),encoding = 'latin1').tolist()
 		splits = sio.loadmat("{}/{}".format(self.root,"splits.mat"))
 		self.indexes = [x[0] - 1  for x in splits["trainNdxs"]] if opt.phase == "train" else [x[0] -1 for x in splits["testNdxs"]]
 		self.num_labels = 40
 		self.ignore_label = 0
 		self.class_weights = None
-		assert(opt.resize_or_crop == 'resize_and_crop')
 
 	def __getitem__(self, index):
 		index = self.indexes[index]

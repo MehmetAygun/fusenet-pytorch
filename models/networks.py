@@ -379,7 +379,7 @@ class FusenetGenerator(nn.Module):
 
 class FusenetGeneratorTest(nn.Module):
 	def __init__(self, num_labels, rgb_enc=True, depth_enc=True, rgb_dec=True, depth_dec=False):
-		super(FusenetGenerator, self).__init__()
+		super(FusenetGeneratorTest, self).__init__()
 		batchNorm_momentum = 0.1#TODO:make param
 		self.c = nn.Conv2d(3, num_labels, kernel_size=3, padding=1)
 		self.need_initialization = []
