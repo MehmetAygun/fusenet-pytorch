@@ -118,6 +118,10 @@ def make_layers_from_size(sizes):
 		layers += [nn.Conv2d(size[0], size[1], kernel_size=3, padding=1), nn.BatchNorm2d(size[1],momentum = 0.1), nn.ReLU(inplace=True)]
 	return nn.Sequential(*layers)
 	
+class MyUpsample2(nn.Module):
+    def forward(self, x):
+        return x[:, :, :, None, :, None].expand(-1, -1, -1, 2, -1, 2).reshape(x.size(0), x.size(1), x.size(2)*2, x.size(3)*2)
+	
 class FusenetGenerator(nn.Module):
 	def __init__(self, num_labels, rgb_enc=True, depth_enc=True, rgb_dec=True, depth_dec=False):
 		super(FusenetGenerator, self).__init__()
@@ -176,29 +180,34 @@ class FusenetGenerator(nn.Module):
 			####  RGB DECODER  ####
 			
 			self.unpool5 = nn.MaxUnpool2d(kernel_size=2, stride=2)
+			self.upconv5 =  nn.ConvTranspose2d(512, 512, 4, padding=1, stride=2, bias=False,output_padding=(1,0))
 			self.CBR5_RGB_DEC = make_layers_from_size([[512,512],[512,512],[512,512]])
 			self.dropout5_dec = nn.Dropout(p=0.5)
 
 			self.need_initialization.append(self.CBR5_RGB_DEC)
 		
 			self.unpool4 = nn.MaxUnpool2d(kernel_size=2, stride=2)
+			self.upconv4 =  nn.ConvTranspose2d(512, 512, 4, padding=1, stride=2, bias=False)
 			self.CBR4_RGB_DEC = make_layers_from_size([[512,512],[512,512],[512,256]])
 			self.dropout4_dec = nn.Dropout(p=0.5)
 
 			self.need_initialization.append(self.CBR4_RGB_DEC)
 		
 			self.unpool3 = nn.MaxUnpool2d(kernel_size=2, stride=2)
+			self.upconv3 =  nn.ConvTranspose2d(256, 256, 4, padding=1, stride=2, bias=False)
 			self.CBR3_RGB_DEC = make_layers_from_size([[256,256],[256,256],[256,128]])
 			self.dropout3_dec = nn.Dropout(p=0.5)
 
 			self.need_initialization.append(self.CBR3_RGB_DEC)
 			
 			self.unpool2 = nn.MaxUnpool2d(kernel_size=2, stride=2)
+			self.upconv2 =  nn.ConvTranspose2d(128, 128, 4, padding=1, stride=2, bias=False)
 			self.CBR2_RGB_DEC = make_layers_from_size([[128,128],[128,64]])
 			
 			self.need_initialization.append(self.CBR2_RGB_DEC)
 			
 			self.unpool1 = nn.MaxUnpool2d(kernel_size=2, stride=2)
+			self.upconv1 =  nn.ConvTranspose2d(64, 64, 4, padding=1, stride=2, bias=False)
 			self.CBR1_RGB_DEC = nn.Sequential (
 			nn.Conv2d(64, 64, kernel_size=3, padding=1),
 			nn.BatchNorm2d(64, momentum= batchNorm_momentum),
@@ -268,26 +277,27 @@ class FusenetGenerator(nn.Module):
 		########  DECODER  ########
 
 		# Stage 5 dec
-		y = self.unpool5(y, id5,output_size=y_size)
+		#y = self.unpool5(y, id5,output_size=y_size)
+		y = self.upconv5(y)
 		y = self.CBR5_RGB_DEC(y)
 		y = self.dropout5_dec(y)
 		
 		# Stage 4 dec
-		y = self.unpool4(y, id4)
+		y = self.upconv4(y)
 		y = self.CBR4_RGB_DEC(y)
 		y = self.dropout4_dec(y)
 
 		# Stage 3 dec
-		y = self.unpool3(y, id3)
+		y = self.upconv3(y)
 		y = self.CBR3_RGB_DEC(y)
 		y = self.dropout3_dec(y)
 
 		# Stage 2 dec
-		y = self.unpool2(y, id2)
+		y = self.upconv2(y)
 		y = self.CBR2_RGB_DEC(y)
 
 		# Stage 1 dec
-		y = self.unpool1(y, id1)
+		y = self.upconv1(y)
 		y = self.CBR1_RGB_DEC(y)
 
 		return y

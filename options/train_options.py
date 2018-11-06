@@ -26,7 +26,7 @@ class TrainOptions(BaseOptions):
         parser.add_argument('--weight_decay', type=float, default=0.0005, help='momentum factor for optimizer')
         parser.add_argument('--lr_policy', type=str, default='lambda', help='learning rate policy: lambda|step|plateau|cosine')
         parser.add_argument('--lr_decay_iters', type=int, default=50000, help='multiply by a gamma every lr_decay_iters iterations')
-        parser.add_argument('--lr_decay_epochs', type=int, default=4, help='multiply by a gamma every lr_decay_epoch epochs')
+        parser.add_argument('--lr_decay_epochs', type=int, default=50, help='multiply by a gamma every lr_decay_epoch epochs')
         parser.add_argument('--lr_gamma', type=float, default=0.9, help='gamma factor for lr_scheduler')
         parser.add_argument('--seed', type=int, default=0, help='seed for random generators')
         self.isTrain = True
