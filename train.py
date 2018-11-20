@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 #SBATCH --job-name=fusenet
 #SBATCH --nodes=1
 #SBATCH --cpus=10
