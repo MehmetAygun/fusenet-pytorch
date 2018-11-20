@@ -49,7 +49,8 @@ class Visualizer():
         self.win_size = opt.display_winsize
         self.name = opt.name
         self.opt = opt
-        self.impalette = list(np.genfromtxt(opt.dataroot+'/palette.txt',dtype=np.uint8).reshape(3*256))
+        palet_file = 'datasets/palette.txt'
+        self.impalette = list(np.genfromtxt(palet_file,dtype=np.uint8).reshape(3*256))
         self.saved = False
         if self.display_id > 0:
             import visdom

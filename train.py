@@ -16,8 +16,8 @@ if __name__ == '__main__':
 	random.seed(train_opt.seed)
 	torch.manual_seed(train_opt.seed)
 	torch.backends.cudnn.deterministic = True
+	torch.backends.cudnn.benchmark = False
 	torch.cuda.manual_seed(train_opt.seed)
-	#torch.set_default_tensor_type('torch.DoubleTensor')
 
 	train_data_loader = CreateDataLoader(train_opt)
 	train_dataset = train_data_loader.load_data()

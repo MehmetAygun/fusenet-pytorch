@@ -40,7 +40,7 @@ class FuseNetModel(BaseModel):
 			self.optimizers = []
 
 			self.optimizer_FuseNet = torch.optim.SGD(self.netFuseNet.parameters(), lr=opt.lr, momentum=opt.momentum, weight_decay=opt.weight_decay)
-			# self.optimizer_FuseNet = torch.optim.Adam(self.netFuseNet.parameters(), lr=opt.lr, weight_decay=opt.weight_decay)
+			#self.optimizer_FuseNet = torch.optim.Adam(self.netFuseNet.parameters(), lr=opt.lr, weight_decay=opt.weight_decay)
 			self.optimizers.append(self.optimizer_FuseNet)
 
 	def set_input(self, input):
