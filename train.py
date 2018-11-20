@@ -1,3 +1,11 @@
+#!/usr/bin/env python3
+#SBATCH --job-name=fusenet
+#SBATCH --nodes=1
+#SBATCH --cpus=10
+#SBATCH --gres=gpu:1
+#SBATCH --mem=12GB
+#SBATCH --time="UNLIMITED"
+
 import time
 from options.train_options import TrainOptions
 from data import CreateDataLoader
