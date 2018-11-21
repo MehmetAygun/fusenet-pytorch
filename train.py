@@ -47,7 +47,7 @@ if __name__ == '__main__':
 	model.setup(train_opt)
 	visualizer = Visualizer(train_opt)
 	total_steps = 0
-	for epoch in range(train_opt.epoch_count, train_opt.niter + train_opt.niter_decay + 1):
+	for epoch in range(train_opt.epoch_count, train_opt.niter + 1):
 		model.train()
 		epoch_start_time = time.time()
 		iter_data_time = time.time()
@@ -84,9 +84,9 @@ if __name__ == '__main__':
 			model.save_networks('latest')
 			model.save_networks(epoch)
 
-		print('End of epoch %d / %d \t Time Taken: %d sec' %   (epoch, train_opt.niter + train_opt.niter_decay, time.time() - epoch_start_time))
+		print('End of epoch %d / %d \t Time Taken: %d sec' %   (epoch, train_opt.niter, time.time() - epoch_start_time))
 		model.update_learning_rate()
-		if epoch > train_opt.niter and epoch % 5 == 0:
+		if epoch > 100 and epoch % 5 == 0:
 			model.eval()
 			test_loss_iter = []
 			gts = None
@@ -107,10 +107,10 @@ if __name__ == '__main__':
 					else :
 					    gts = np.concatenate((gts, gt), axis=0)
 					    preds = np.concatenate((preds, pred), axis=0)
-					# visualizer.display_current_results(model.get_current_visuals(), epoch, False)
+					visualizer.display_current_results(model.get_current_visuals(), epoch, False)
 					losses = model.get_current_losses()
 					test_loss_iter.append(model.loss_segmentation)
-					print('test epoch {0:}, iters: {1:} '.format(epoch, epoch_iter), end='\r')
+					print('test epoch {0:}, iters: {1:}/{2:} '.format(epoch, epoch_iter, len(test_dataset) * test_opt.batch_size), end='\r')
 
 				avg_test_loss = np.mean(test_loss_iter)
 				print ('Epoch {0:} test loss: {1:.3f} '.format(epoch, avg_test_loss))
