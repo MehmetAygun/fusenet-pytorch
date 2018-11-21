@@ -8,7 +8,7 @@ def create_nyu2():
 
 		print ("Loading mat file ...")
 
-		f = h5py.File('nyu_depth_v2_labeled.mat')
+		f = h5py.File('nyuv2/nyu_depth_v2_labeled.mat')
 		rgb_images = np.array([x for x in f["images"]])
 		depth_images = np.array([x for x in f["depths"]])
 		labels= np.array([x for x in f["labels"]])
