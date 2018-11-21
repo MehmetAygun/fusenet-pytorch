@@ -194,4 +194,5 @@ class Visualizer():
     def save_confusion_matrix(self, conf_mat, epoch):
         conf_mats = pickle.load(open(self.conf_mat_name, "rb"))
         conf_mats["epoch"+str(epoch)] = conf_mat
+        conf_mats["epoch"+str(epoch)+"_scores"] = np.asarray(util.getScores(conf_mat))
         pickle.dump(conf_mats, open(self.conf_mat_name, "wb"))
