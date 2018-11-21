@@ -17,10 +17,16 @@ def create_nyu2():
 
 		print ("Mapping 894 class to 40 class...")
 
-		for i,label in enumerate(labels):
-			for j,row in enumerate(label):
-				for k,value in enumerate(row):
-					labels[i][j][k] = mapping[value-1] - 1
+		for map_from, map_to in enumerate(mapping):
+			# label 0 means unlabeled and will be ignored in training
+			map_from = map_from + 1
+			print("--- mapping from " + str(map_from) + " to " + str(map_to), end='\r')
+			labels[labels==map_from] = map_to
+
+		# for i,label in enumerate(labels):
+		# 	for j,row in enumerate(label):
+		# 		for k,value in enumerate(row):
+		# 			labels[i][j][k] = mapping[value-1] - 1
 
 		print ("Resizing and scaling images and labels...")
 
