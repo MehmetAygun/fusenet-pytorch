@@ -44,17 +44,16 @@ class Scannetv2Dataset(BaseDataset):
 				self.rgb_frames.extend(rgb_frames)
 				self.depth_frames.extend(depth_frames)
 				self.masks.extend(masks)
-		self.depth_max = 9998 #for normalization
 
 	def __getitem__(self, index):
 
 		size = (640,480)
 		rgb_image = np.array(Image.open(self.rgb_frames[index]))
 		rgb_image = cv2.resize(rgb_image,size,interpolation=cv2.INTER_LINEAR)
-		depth_image = np.array(Image.open(self.depth_frames[index]), dtype=np.float)
+		depth_image = np.array(Image.open(self.depth_frames[index]))
+		depth_image = cv2.resize(depth_image,size,interpolation=cv2.INTER_NEAREST).astype(np.float)
 		depth_image = (depth_image - depth_image.min()) / (depth_image.max() - depth_image.min()) * 255
 		depth_image = depth_image.astype(np.uint8)
-		#depth_image = cv2.resize(depth_image,size,interpolation=cv2.INTER_NEAREST)
 		mask = np.array(Image.open(self.masks[index]))
 		mask = cv2.resize(mask,size,interpolation=cv2.INTER_NEAREST)
 
