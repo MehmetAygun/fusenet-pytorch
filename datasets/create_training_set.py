@@ -6,7 +6,7 @@ import zipfile
 
 def create_nyu2():
 
-		print "Loading mat file ..."
+		print ("Loading mat file ...")
 
 		f = h5py.File('nyu_depth_v2_labeled.mat')
 		rgb_images = np.array([x for x in f["images"]])
@@ -15,14 +15,14 @@ def create_nyu2():
 
 		mapping =  sio.loadmat("nyuv2_40class_mapping.mat")["mapping"][0]
 
-		print "Mapping 894 class to 40 class..."
+		print ("Mapping 894 class to 40 class...")
 
 		for i,label in enumerate(labels):
 			for j,row in enumerate(label):
 				for k,value in enumerate(row):
 					labels[i][j][k] = mapping[value-1] - 1
 
-		print "Resizing and scaling images and labels..."
+		print ("Resizing and scaling images and labels...")
 
 		rgbs=[]
 		depths=[]
@@ -50,11 +50,11 @@ def create_nyu2():
 
 		d = { "rgb_images":rgbs, "depth_images":depths, "masks":masks}
 
-		print "Saving images and labels..."
+		print ("Saving images and labels...")
 
 		np.save("nyu2.npy", d)
 
-		print "Finished !"
+		print ("Finished !")
 
 def create_scannet(path='/usr/data/cvpr_shared/common_datasets/scannet/scans',mode='train'):
 
@@ -71,7 +71,7 @@ def create_scannet(path='/usr/data/cvpr_shared/common_datasets/scannet/scans',mo
 			zip_ref.close()
 
 
-	print "Finished !"
+	print ("Finished !")
 
 def create_dataset(dataset):
 
@@ -80,10 +80,10 @@ def create_dataset(dataset):
 	elif dataset == "scannet":
 		create_scannet()
 	else:
-		print "Dataset {} is not implemented".format(dataset)
+		print ("Dataset {} is not implemented".format(dataset))
 
 def main():
-	create_dataset("scannet")
+	create_dataset("nyu2")
 
 if __name__ == '__main__':
 	main()
