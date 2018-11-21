@@ -8,7 +8,7 @@ from PIL import Image
 import numpy as np
 import scipy.io as sio
 
-class Nyu2Dataset(BaseDataset):
+class nyuv2dataset(BaseDataset):
 	@staticmethod
 	def modify_commandline_options(parser, is_train):
 		return parser
@@ -51,4 +51,4 @@ class Nyu2Dataset(BaseDataset):
 		return len(self.indexes)
 
 	def name(self):
-		return 'Nyu2Dataset'
+		return 'nyuv2dataset'
