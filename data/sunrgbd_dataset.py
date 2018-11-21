@@ -52,4 +52,4 @@ class sunrgbddataset(BaseDataset):
 		return len(self.indexes)
 
 	def name(self):
-		return 'SunRGBD'
+		return 'sunrgbd'
