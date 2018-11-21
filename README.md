@@ -1,7 +1,7 @@
 <!-- <img src='imgs/horse2zebra.gif' align="right" width=384> -->
 <!-- <br><br><br> -->
 
-# FuseNet implementation in in PyTorch
+# FuseNet implementation in PyTorch
 
 This is the PyTorch implementation for FuseNet, developed based on [Pix2Pix](https://github.com/junyanz/pytorch-CycleGAN-and-pix2pix) code.
 
