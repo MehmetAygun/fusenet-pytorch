@@ -13,7 +13,7 @@ def create_nyu2():
 		depth_images = np.array([x for x in f["depths"]])
 		labels= np.array([x for x in f["labels"]])
 
-		mapping =  sio.loadmat("nyuv2_40class_mapping.mat")["mapping"][0]
+		mapping =  sio.loadmat("nyuv2/nyuv2_40class_mapping.mat")["mapping"][0]
 
 		print ("Mapping 894 class to 40 class...")
 
@@ -57,7 +57,7 @@ def create_nyu2():
 
 		print ("Saving images and labels...")
 
-		np.save("nyu2.npy", d)
+		np.save("nyuv2/nyuv2.npy", d)
 
 		print ("Finished !")
 
