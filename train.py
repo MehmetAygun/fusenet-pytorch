@@ -86,7 +86,7 @@ if __name__ == '__main__':
 
 		print('End of epoch %d / %d \t Time Taken: %d sec' %   (epoch, train_opt.niter, time.time() - epoch_start_time))
 		model.update_learning_rate()
-		if epoch > 100 and epoch % 5 == 0:
+		if epoch > 100 and epoch % 10 == 0:
 			model.eval()
 			test_loss_iter = []
 			gts = None
