@@ -23,7 +23,7 @@ class Scannetv2Dataset(BaseDataset):
 		self.ignore_label = 0
 		self.class_weights = None
 		mode = "train" if opt.phase == "train" else "val"
-		with open('./datasets/scannetv2_{}.txt'.format(mode)) as f:
+		with open('./datasets/scannet/scannetv2_{}.txt'.format(mode)) as f:
 			scans = f.readlines()
 		self.scans = [x.strip() for x in scans]
 
