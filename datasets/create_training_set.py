@@ -44,10 +44,9 @@ def create_nyu2():
 
 		for depth_image in depth_images:
 			depth_image = np.transpose(depth_image,(1,0))
-			depth_image = (depth_image - min_depth) / (1.*(max_depth-min_depth))*255
-			depth_image = cv2.resize(depth_image,(320,240),interpolation=cv2.INTER_NEAREST)
-			depth_image = depth_image.astype(int)
-			depths.append(np.array(depth_image,dtype=np.uint8))
+			depth_image = cv2.resize(depth_image,(320,240), interpolation=cv2.INTER_NEAREST).astype(np.float)
+			depth_image = (depth_image - depth_image.min()) / (depth_image.max() - depth_image.min()) * 255
+			depths.append(depth_image.astype(np.uint8))
 
 		for label in labels:
 			label = np.transpose(label,(1,0))
