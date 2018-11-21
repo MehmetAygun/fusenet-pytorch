@@ -20,18 +20,18 @@ cd fusenet-pytorch
 pip install -r requirements.txt
 ```
 
-### FuseNet train/test
+## FuseNet train/test
 
-## visdom visualization
+### visdom visualization
 To view training errors and loss plots, set `--display_id 1`, run `python -m visdom.server` and click the URL http://localhost:8097. Checkpoints are saved under `./checkpoints/sunrgbd/`.
 
-## train
-```python
-python train.py --dataroot datasets/sunrgbd --model fusenet --dataset sunrgbd --display_port 8083 --name sunrgbd --no_html --batch_size 4 --num_threads 8
+### train
+```bash
+python train.py --dataroot datasets/sunrgbd --model fusenet --dataset sunrgbd --name sunrgbd --no_html --batch_size 4 --num_threads 8
 ```
 
-## test
-```python
+### test
+```bash
 python test.py --dataroot datasets/sunrgbd --model fusenet --dataset sunrgbd --name sunrgbd --gpu_ids 0 --epoch 305
 ```
 
