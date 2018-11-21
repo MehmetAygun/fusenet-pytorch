@@ -36,7 +36,8 @@ python test.py --dataroot datasets/sunrgbd --model fusenet --dataset sunrgbd --n
 ```
 
 ### Optimization scheme and loss weights
-* We use the training scheme defined in FuseNet.
+* We use the training scheme defined in FuseNet
+* Loss is weighted for SUNRGBD dataset
 * Results can be improved with a hyper-parameter search
 
 | Dataset       | FuseNet (CAFFE) | FuseNet |
