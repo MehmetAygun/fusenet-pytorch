@@ -12,7 +12,7 @@ from data import CreateDataLoader
 from models import create_model
 from util.visualizer import Visualizer
 # from util.visualize_mask import *
-from util.util import confusion_matrix,getScores
+from util.util import confusion_matrix, getScores
 import numpy as np
 import random
 import torch
@@ -92,6 +92,7 @@ if __name__ == '__main__':
 			gts = None
 			preds = None
 			epoch_iter = 0
+			conf_mat = np.zeros((dataset.dataset.num_labels, dataset.dataset.num_labels), dtype=np.float)
 			with torch.no_grad():
 				for i, data in enumerate(test_dataset):
 					model.set_input(data)
@@ -101,12 +102,7 @@ if __name__ == '__main__':
 					gt = model.mask.cpu().int().numpy()
 					_, pred = torch.max(model.output.data.cpu(), 1)
 					pred = pred.float().detach().int().numpy()
-					if gts is None:
-					    gts = gt
-					    preds = pred
-					else :
-					    gts = np.concatenate((gts, gt), axis=0)
-					    preds = np.concatenate((preds, pred), axis=0)
+					conf_mat += confusion_matrix(gt, pred, train_dataset.dataset.num_labels, ignore_label=train_dataset.dataset.ignore_label)
 					visualizer.display_current_results(model.get_current_visuals(), epoch, False)
 					losses = model.get_current_losses()
 					test_loss_iter.append(model.loss_segmentation)
@@ -114,7 +110,6 @@ if __name__ == '__main__':
 
 				avg_test_loss = np.mean(test_loss_iter)
 				print ('Epoch {0:} test loss: {1:.3f} '.format(epoch, avg_test_loss))
-				conf_mat = confusion_matrix(gts, preds, train_dataset.dataset.num_labels, ignore_label=train_dataset.dataset.ignore_label)
 				glob,mean,iou = getScores(conf_mat)
 				print ('Epoch {0:} glob acc : {1:.2f}, mean acc : {2:.2f}, IoU : {3:.2f}'.format(epoch, glob, mean, iou))
 				visualizer.save_confusion_matrix(conf_mat, epoch)

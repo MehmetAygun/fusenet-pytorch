@@ -3,6 +3,7 @@ from options.test_options import TestOptions
 from data import CreateDataLoader
 from models import create_model
 from util.visualizer import save_images
+from util.util import confusion_matrix, getScores
 from util import html
 import torch
 import numpy as np
@@ -19,22 +20,35 @@ if __name__ == '__main__':
     dataset = data_loader.load_data()
     model = create_model(opt, dataset.dataset)
     model.setup(opt)
+    model.eval()
+
     # create a website
     web_dir = os.path.join(opt.results_dir, opt.name, '%s_%s' % (opt.phase, opt.epoch))
     webpage = html.HTML(web_dir, 'Experiment = %s, Phase = %s, Epoch = %s' % (opt.name, opt.phase, opt.epoch))
 
-    model.eval()
     test_loss_iter = []
+    epoch_iter = 0
+    conf_mat = np.zeros((dataset.dataset.num_labels, dataset.dataset.num_labels), dtype=np.float)
     with torch.no_grad():
         for i, data in enumerate(dataset):
-            if i >= opt.num_test:
-                break
             model.set_input(data)
             model.forward()
             model.get_loss()
+            epoch_iter += opt.batch_size
+            gt = model.mask.cpu().int().numpy()
+            _, pred = torch.max(model.output.data.cpu(), 1)
+            pred = pred.float().detach().int().numpy()
+            conf_mat += confusion_matrix(gt, pred, dataset.dataset.num_labels, ignore_label=dataset.dataset.ignore_label)
+            save_images(webpage, model.get_current_visuals(), model.get_image_paths())
+            losses = model.get_current_losses()
             test_loss_iter.append(model.loss_segmentation)
+            print('test epoch {0:}, iters: {1:}/{2:} '.format(opt.epoch, epoch_iter, len(dataset) * opt.batch_size), end='\r')
+
+        avg_test_loss = np.mean(test_loss_iter)
+        print ('Epoch {0:} test loss: {1:.3f} '.format(opt.epoch, avg_test_loss))
+        glob,mean,iou = getScores(conf_mat)
+        print ('Epoch {0:} glob acc : {1:.2f}, mean acc : {2:.2f}, IoU : {3:.2f}'.format(opt.epoch, glob, mean, iou))
+        visualizer.save_confusion_matrix(conf_mat, opt.epoch)
 
     # save the website
     webpage.save()
-    avg_test_loss = np.mean(test_loss_iter)
-    print (avg_test_loss)

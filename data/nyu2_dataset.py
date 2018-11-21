@@ -45,7 +45,7 @@ class Nyu2Dataset(BaseDataset):
 		#	B = B.index_select(2, idx)
 		#mask = mask.unsqueeze(0)
 
-		return {'rgb_image': rgb_image, 'depth_image': depth_image, 'mask': mask}
+		return {'rgb_image': rgb_image, 'depth_image': depth_image, 'mask': mask, 'path': str(index)+".png"}}
 
 	def __len__(self):
 		return len(self.indexes)

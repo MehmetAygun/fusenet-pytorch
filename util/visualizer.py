@@ -19,13 +19,15 @@ def save_images(webpage, visuals, image_path, aspect_ratio=1.0, width=224):
     image_dir = webpage.get_image_dir()
     short_path = ntpath.basename(image_path[0])
     name = os.path.splitext(short_path)[0]
+    palet_file = 'datasets/palette.txt'
+    impalette = list(np.genfromtxt(palet_file, dtype=np.uint8).reshape(3*256))
 
     webpage.add_header(name)
     ims, txts, links = [], [], []
 
     for label, im_data in visuals.items():
         if label == 'mask' or label == 'output':
-            im = util.tensor2labelim(image,self.impalette)
+            im = util.tensor2labelim(im_data, impalette)
         else:
             im = util.tensor2im(im_data)
         image_name = '%s_%s.png' % (name, label)
@@ -66,7 +68,7 @@ class Visualizer():
         with open(self.log_name, "a") as log_file:
             now = time.strftime("%c")
             log_file.write('================ Training Loss (%s) ================\n' % now)
-        self.conf_mat_name = os.path.join(opt.checkpoints_dir, opt.name, 'conf_mat.pkl')
+        self.conf_mat_name = os.path.join(opt.checkpoints_dir, opt.name, opt.phase + '_conf_mat.pkl')
         with open(self.conf_mat_name, "wb") as conf_mat_file:
             conf_mat = {}
             pickle.dump(conf_mat, conf_mat_file)

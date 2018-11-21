@@ -27,6 +27,5 @@ class TrainOptions(BaseOptions):
         parser.add_argument('--lr_decay_iters', type=int, default=5000000, help='multiply by a gamma every lr_decay_iters iterations')
         parser.add_argument('--lr_decay_epochs', type=int, default=25, help='multiply by a gamma every lr_decay_epoch epochs')
         parser.add_argument('--lr_gamma', type=float, default=0.9, help='gamma factor for lr_scheduler')
-        parser.add_argument('--seed', type=int, default=0, help='seed for random generators')
         self.isTrain = True
         return parser
