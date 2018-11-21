@@ -20,7 +20,7 @@ class nyuv2dataset(BaseDataset):
 		self.nyu2 = np.load("{}/{}".format(self.root,"nyuv2.npy"),encoding = 'latin1').tolist()
 		splits = sio.loadmat("{}/{}".format(self.root,"splits.mat"))
 		self.indexes = [x[0] - 1  for x in splits["trainNdxs"]] if opt.phase == "train" else [x[0] -1 for x in splits["testNdxs"]]
-		self.num_labels = 40
+		self.num_labels = 41
 		self.ignore_label = 0
 		self.class_weights = None
 
