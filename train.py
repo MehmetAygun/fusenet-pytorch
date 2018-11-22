@@ -92,7 +92,7 @@ if __name__ == '__main__':
 			gts = None
 			preds = None
 			epoch_iter = 0
-			conf_mat = np.zeros((dataset.dataset.num_labels, dataset.dataset.num_labels), dtype=np.float)
+			conf_mat = np.zeros((test_dataset.dataset.num_labels, test_dataset.dataset.num_labels), dtype=np.float)
 			with torch.no_grad():
 				for i, data in enumerate(test_dataset):
 					model.set_input(data)
@@ -102,7 +102,7 @@ if __name__ == '__main__':
 					gt = model.mask.cpu().int().numpy()
 					_, pred = torch.max(model.output.data.cpu(), 1)
 					pred = pred.float().detach().int().numpy()
-					conf_mat += confusion_matrix(gt, pred, train_dataset.dataset.num_labels, ignore_label=train_dataset.dataset.ignore_label)
+					conf_mat += confusion_matrix(gt, pred, test_dataset.dataset.num_labels, ignore_label=test_dataset.dataset.ignore_label)
 					visualizer.display_current_results(model.get_current_visuals(), epoch, False)
 					losses = model.get_current_losses()
 					test_loss_iter.append(model.loss_segmentation)
