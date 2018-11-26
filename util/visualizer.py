@@ -65,7 +65,8 @@ class Visualizer():
             print('create web directory %s...' % self.web_dir)
             util.mkdirs([self.web_dir, self.img_dir])
         self.log_name = os.path.join(opt.checkpoints_dir, opt.name, 'loss_log.txt')
-        with open(self.log_name, "a") as log_file:
+        self.test_log_name = os.path.join(opt.checkpoints_dir, opt.name, 'test_log.txt')
+        with open(self.log_name, "w") as log_file:
             now = time.strftime("%c")
             log_file.write('================ Training Loss (%s) ================\n' % now)
         self.conf_mat_name = os.path.join(opt.checkpoints_dir, opt.name, opt.phase + '_conf_mat.pkl')
@@ -189,6 +190,14 @@ class Visualizer():
 
         print(message)
         with open(self.log_name, "a") as log_file:
+            log_file.write('%s\n' % message)
+
+    def print_current_scores(self, epoch, loss, glob, mean, iou):
+        message = '(epoch {0:} test loss: {1:.3f} '.format(epoch, avg_test_loss)
+        message += 'glob acc : {1:.2f}, mean acc : {2:.2f}, IoU : {3:.2f}'.format(epoch, glob, mean, iou)
+
+        print(message)
+        with open(self.test_log_name, "a") as log_file:
             log_file.write('%s\n' % message)
 
     def save_confusion_matrix(self, conf_mat, epoch):
