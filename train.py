@@ -74,19 +74,15 @@ if __name__ == '__main__':
 					visualizer.plot_current_losses(epoch,
                                                 float(epoch_iter) / train_dataset_size, train_opt, losses)
 
-			# if total_steps % train_opt.save_latest_freq == 0:
-			# 	print('saving the latest model (epoch %d, total_steps %d)' %  (epoch, total_steps))
-			# 	model.save_networks('latest')
-
 			iter_data_time = time.time()
-		if epoch % train_opt.save_epoch_freq == 0:
+
+		print('End of epoch %d / %d \t Time Taken: %d sec' %   (epoch, train_opt.niter, time.time() - epoch_start_time))
+		model.update_learning_rate()
+		if epoch > 100 and epoch % train_opt.save_epoch_freq == 0:
 			print('saving the model at the end of epoch %d, iters %d' % (epoch, total_steps))
 			model.save_networks('latest')
 			model.save_networks(epoch)
 
-		print('End of epoch %d / %d \t Time Taken: %d sec' %   (epoch, train_opt.niter, time.time() - epoch_start_time))
-		model.update_learning_rate()
-		if epoch > 100 and epoch % 10 == 0:
 			model.eval()
 			test_loss_iter = []
 			gts = None
@@ -110,5 +106,5 @@ if __name__ == '__main__':
 
 			avg_test_loss = np.mean(test_loss_iter)
 			glob,mean,iou = getScores(conf_mat)
-			print_current_scores(self, epoch, avg_test_loss, glob, mean, iou)
+			visualizer.print_current_scores(self, epoch, avg_test_loss, glob, mean, iou)
 			visualizer.save_confusion_matrix(conf_mat, epoch)
