@@ -44,6 +44,17 @@ def save_images(webpage, visuals, image_path, aspect_ratio=1.0, width=224):
         links.append(image_name)
     webpage.add_images(ims, txts, links, width=width)
 
+def save_scannet_prediction(mask,scan,frame,data_dir,save_dir):
+
+        palet_file = 'datasets/palette.txt'
+        impalette = list(np.genfromtxt(palet_file, dtype=np.uint8).reshape(3*256))
+        im = util.tensor2labelim(mask, impalette)
+        save_path = os.path.join(save_dir, scan+'_'+frame)
+        size = (1296,968)
+        im = cv2.resize(im,size,interpolation=cv2.INTER_NEAREST)
+        util.save_image(im, save_path)
+
+
 class Visualizer():
     def __init__(self, opt):
         self.display_id = opt.display_id

@@ -1,9 +1,8 @@
 #!/usr/bin/env python
 #SBATCH --job-name=fusenet
 #SBATCH --nodes=1
-#SBATCH --cpus=10
+#SBATCH --cpus=4
 #SBATCH --gres=gpu:1
-#SBATCH --mem=12GB
 #SBATCH --time="UNLIMITED"
 
 import time
@@ -33,7 +32,7 @@ if __name__ == '__main__':
 	print('#training images = %d' % train_dataset_size)
 
 	test_opt = TrainOptions().parse()
-	test_opt.phase = 'test'
+	test_opt.phase = 'val'
 	test_opt.num_threads = 1
 	test_opt.serial_batches = True
 	test_opt.no_flip = True

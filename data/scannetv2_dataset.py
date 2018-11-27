@@ -22,8 +22,7 @@ class Scannetv2Dataset(BaseDataset):
 		self.num_labels = 41
 		self.ignore_label = 0
 		self.class_weights = None
-		mode = "train" if opt.phase == "train" else "val"
-		with open('./datasets/scannet/scannetv2_{}.txt'.format(mode)) as f:
+		with open('./datasets/scannet/scannetv2_{}.txt'.format(opt.phase)) as f:
 			scans = f.readlines()
 		self.scans = [x.strip() for x in scans]
 
@@ -47,7 +46,7 @@ class Scannetv2Dataset(BaseDataset):
 
 	def __getitem__(self, index):
 
-		size = (640,480)
+		size = (320,240)
 		rgb_image = np.array(Image.open(self.rgb_frames[index]))
 		rgb_image = cv2.resize(rgb_image,size,interpolation=cv2.INTER_LINEAR)
 		depth_image = np.array(Image.open(self.depth_frames[index]))
@@ -73,7 +72,7 @@ class Scannetv2Dataset(BaseDataset):
 		#	B = B.index_select(2, idx)
 		#mask = mask.unsqueeze(0)
 
-		return {'rgb_image': rgb_image, 'depth_image': depth_image, 'mask': mask, 'path': str(index)+".png"}
+		return {'rgb_image': rgb_image, 'depth_image': depth_image, 'mask': mask, 'path': self.rgb_frames[index].split('/')[-1], 'scan':self.rgb_frames[index].split('/')[-2]}
 
 	def __len__(self):
 		return self.total_frames

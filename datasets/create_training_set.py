@@ -60,30 +60,10 @@ def create_nyu2():
 		np.save("nyuv2/nyuv2.npy", d)
 
 		print ("Finished !")
-
-def create_scannet(path='/usr/data/cvpr_shared/common_datasets/scannet/scans',mode='train'):
-
-	scan_paths = [x[0] for x in os.walk("/usr/data/cvpr_shared/common_datasets/scannet/scans/")][1:]
-	for scan_path in scan_paths:
-		scan_name = scan_path.split("/")[-1]
-		if not os.path.exists("{}/{}_2d-label".format(scan_path,scan_name)):
-			zip_ref = zipfile.ZipFile("{}/{}_2d-label.zip".format(scan_path,scan_name), 'r')
-			zip_ref.extractall("{}/{}_2d-label".format(scan_path,scan_name))
-			zip_ref.close()
-		if not os.path.exists("{}/{}_2d-instance".format(scan_path,scan_name)):
-			zip_ref = zipfile.ZipFile("{}/{}_2d-instance.zip".format(scan_path,scan_name), 'r')
-			zip_ref.extractall("{}/{}_2d-instance".format(scan_path,scan_name))
-			zip_ref.close()
-
-
-	print ("Finished !")
-
 def create_dataset(dataset):
 
 	if dataset == "nyu2":
 		create_nyu2()
-	elif dataset == "scannet":
-		create_scannet()
 	else:
 		print ("Dataset {} is not implemented".format(dataset))
 
