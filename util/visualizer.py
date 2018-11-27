@@ -208,7 +208,7 @@ class Visualizer():
 
     def print_current_scores(self, epoch, loss, glob, mean, iou):
         message = '(epoch {0:} test loss: {1:.3f} '.format(epoch, loss)
-        message += 'glob acc : {1:.2f}, mean acc : {2:.2f}, IoU : {3:.2f}'.format(epoch, glob, mean, iou)
+        message += 'glob acc : {0:.2f}, mean acc : {1:.2f}, IoU : {2:.2f}'.format(glob, mean, iou)
 
         print(message)
         with open(self.test_log_name, "a") as log_file:
