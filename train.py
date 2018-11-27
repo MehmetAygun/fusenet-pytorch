@@ -105,5 +105,5 @@ if __name__ == '__main__':
 
 			avg_test_loss = np.mean(test_loss_iter)
 			glob,mean,iou = getScores(conf_mat)
-			visualizer.print_current_scores(self, epoch, avg_test_loss, glob, mean, iou)
+			visualizer.print_current_scores(epoch, avg_test_loss, glob, mean, iou)
 			visualizer.save_confusion_matrix(conf_mat, epoch)
