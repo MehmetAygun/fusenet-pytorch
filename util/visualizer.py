@@ -80,6 +80,9 @@ class Visualizer():
         with open(self.log_name, "w") as log_file:
             now = time.strftime("%c")
             log_file.write('================ Training Loss (%s) ================\n' % now)
+        with open(self.test_log_name, "w") as log_file:
+            now = time.strftime("%c")
+            log_file.write('================ Test Log (%s) ================\n' % now)
         self.conf_mat_name = os.path.join(opt.checkpoints_dir, opt.name, opt.phase + '_conf_mat.pkl')
         with open(self.conf_mat_name, "wb") as conf_mat_file:
             conf_mat = {}
