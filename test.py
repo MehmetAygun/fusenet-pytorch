@@ -44,7 +44,7 @@ if __name__ == '__main__':
             save_images(webpage, model.get_current_visuals(), model.get_image_paths())
             if dataset.name() == 'Scannetv2':
                 save_dir = os.path.join(opt.results_dir,opt.name,'prediction')
-                if not os.path.exists(save_dir)
+                if not os.path.exists(save_dir):
                     os.makedirs(save_dir)
                 save_scannet_prediction(model.mask,data['scan'],data['path'],dataset.dataset.root,save_dir)
             losses = model.get_current_losses()
