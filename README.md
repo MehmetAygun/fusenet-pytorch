@@ -38,6 +38,7 @@ python test.py --dataroot datasets/sunrgbd --model fusenet --dataset sunrgbd --n
 ### Optimization scheme and loss weights
 * We use the training scheme defined in FuseNet
 * Loss is weighted for SUNRGBD dataset
+* Learning rate is set to 0.01 for NYUv2 dataset
 * Results can be improved with a hyper-parameter search
 
 <table>
@@ -48,11 +49,11 @@ python test.py --dataroot datasets/sunrgbd --model fusenet --dataset sunrgbd --n
 <tr>
 <td> <b>sunrgbd <td> 76.30 <td> 48.30 <td> 37.30
 <tr>
-<td> <b>nyuv2 <td> 66.00 <td> 43.40 <td> 32.70
+<td> <a href="https://vision.in.tum.de/webarchive/hazirbas/fusenet-pytorch/400_net_FuseNet.pth"> <b>nyuv2 </a> <td> 66.00 <td> 43.40 <td> 32.70 <td>  68.76 <td> 46.42 <td> 35.48
 <tr>
 <td> <b>scannet <td> -- <td> -- <td> --
 </table>
-  
+
 ## Citation
 ```
 @inproceedings{hazirbas16fusenet,

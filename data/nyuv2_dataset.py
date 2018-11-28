@@ -37,14 +37,6 @@ class nyuv2dataset(BaseDataset):
 		mask = torch.from_numpy(mask)
 		mask = mask.type(torch.LongTensor)
 
-		#Random flip ?
-		#if (not self.opt.no_flip) and random.random() < 0.5:
-		#	idx = [i for i in range(A.size(2) - 1, -1, -1)]
-		#	idx = torch.LongTensor(idx)
-		#	A = A.index_select(2, idx)
-		#	B = B.index_select(2, idx)
-		#mask = mask.unsqueeze(0)
-
 		return {'rgb_image': rgb_image, 'depth_image': depth_image, 'mask': mask, 'path': str(index)+".png"}
 
 	def __len__(self):
