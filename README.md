@@ -40,9 +40,19 @@ python test.py --dataroot datasets/sunrgbd --model fusenet --dataset sunrgbd --n
 * Loss is weighted for SUNRGBD dataset
 * Results can be improved with a hyper-parameter search
 
-| Dataset       | FuseNet (CAFFE) | FuseNet |
-| ------------- |:----:| :----: |
-
+<table>
+<tr>
+<td colspan=1> <b>Dataset <td colspan=3> <b>FuseNet-SF5 (CAFFE) <td colspan=3> <b>FuseNet-SF5
+<tr>
+<td> <td> overall <td> mean <td> iou <td> overall <td> mean <td> iou
+<tr>
+<td> <b>sunrgbd <td> 76.30 <td> 48.30 <td> 37.30
+<tr>
+<td> <b>nyuv2 <td> 66.00 <td> 43.40 <td> 32.70
+<tr>
+<td> <b>scannet <td> -- <td> -- <td> --
+</table>
+  
 ## Citation
 ```
 @inproceedings{hazirbas16fusenet,
