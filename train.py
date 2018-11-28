@@ -33,6 +33,7 @@ if __name__ == '__main__':
 
 	test_opt = TrainOptions().parse()
 	test_opt.phase = 'val'
+	test_opt.batch_size = 1
 	test_opt.num_threads = 1
 	test_opt.serial_batches = True
 	test_opt.no_flip = True
