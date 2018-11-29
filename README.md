@@ -47,7 +47,7 @@ python test.py --dataroot datasets/sunrgbd --model fusenet --dataset sunrgbd --n
 <tr>
 <td> <td> overall <td> mean <td> iou <td> overall <td> mean <td> iou
 <tr>
-<td> <b>sunrgbd <td> 76.30 <td> 48.30 <td> 37.30
+<td> <a href="https://vision.in.tum.de/webarchive/hazirbas/fusenet-pytorch/sun/400_net_FuseNet.pth"> <b>sunrgbd </a> <td> 76.30 <td> 48.30 <td> 37.30 <td> 75.41 <td> 46.48 <td> 35.69
 <tr>
 <td> <a href="https://vision.in.tum.de/webarchive/hazirbas/fusenet-pytorch/nyu/400_net_FuseNet.pth"> <b>nyuv2 </a> <td> 66.00 <td> 43.40 <td> 32.70 <td>  68.76 <td> 46.42 <td> 35.48
 <tr>
