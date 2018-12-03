@@ -23,19 +23,20 @@ pip install -r requirements.txt
 ### sunrgbd dataset
 - download and untar the [preprocessed sunrgbd](https://vision.in.tum.de/webarchive/hazirbas/fusenet-pytorch/sun/sunrgbd.tar.gz) dataset under ```/datasets/sunrgbd```.
 ### nyuv2 dataset
-- download the dataset and create the training set.
+- Download the dataset and create the training set
 ```bash
 cd datasets
 sh download_nyuv2.sh
 python create_training_set.py 
 ```
 ### scannetv2 dataset
-- download the ```scannet_frames_25k``` and ```scannet_frames_test``` under ```/datasets/scannet/tasks/```.
+- Download the ```scannet_frames_25k``` and ```scannet_frames_test``` under ```/datasets/scannet/tasks/```
 
 ## FuseNet train/test
 
 ### visdom visualization
-To view training errors and loss plots, set `--display_id 1`, run `python -m visdom.server` and click the URL http://localhost:8097. Checkpoints are saved under `./checkpoints/sunrgbd/`.
+- To view training errors and loss plots, set `--display_id 1`, run `python -m visdom.server` and click the URL http://localhost:8097
+- Checkpoints are saved under `./checkpoints/sunrgbd/`
 
 ### train & test on sunrgbd
 ```bash
@@ -68,7 +69,7 @@ python test.py --dataroot datasets/scannet/tasks/scannet_frames_test --dataset s
 * Loss is weighted for SUNRGBD dataset
 * Learning rate is set to 0.01 for NYUv2 dataset
 * Results can be improved with a hyper-parameter search
-* Results on the scannetv2-test can be found [here](http://kaldir.vc.in.tum.de/scannet_benchmark/result_details?id=67).
+* Results on the scannetv2-test can be found [here](http://kaldir.vc.in.tum.de/scannet_benchmark/result_details?id=67)
 
 <table>
 <tr>
