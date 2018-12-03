@@ -19,8 +19,7 @@ if __name__ == '__main__':
     opt.no_flip = True    # no flip
     opt.display_id = -1   # no visdom display
 
-    if opt.dataset_mode == "scannetv2":
-        # opt.phase = "val"
+    if opt.dataset_mode == "scannetv2" and opt.phase == "test":
         save_dir = os.path.join(opt.results_dir, opt.name, opt.phase + '_' + opt.epoch, 'prediction')
         if not os.path.exists(save_dir):
             os.makedirs(save_dir)
