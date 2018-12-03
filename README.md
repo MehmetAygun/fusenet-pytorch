@@ -68,7 +68,7 @@ python test.py --dataroot datasets/scannet/tasks/scannet_frames_test --dataset s
 <tr>
 <td> <a href="https://vision.in.tum.de/webarchive/hazirbas/fusenet-pytorch/nyu/400_net_FuseNet.pth"> <b>nyuv2 </a> <td> 66.00 <td> 43.40 <td> 32.70 <td>  68.76 <td> 46.42 <td> 35.48
 <tr>
-<td> <b>scannet <td> -- <td> -- <td> --
+<td> <a href="https://vision.in.tum.de/webarchive/hazirbas/fusenet-pytorch/scannet/260_net_FuseNet.pth"> <b>scannetv2-val </a> <td> -- <td> -- <td> -- <td> 76.32 <td> 55.84 <td> 44.12
 </table>
 
 ## Citation
