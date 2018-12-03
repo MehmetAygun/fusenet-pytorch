@@ -20,10 +20,10 @@ if __name__ == '__main__':
     opt.display_id = -1   # no visdom display
 
     if opt.dataset_mode == "scannetv2":
-        opt.phase = "val"
-        # save_dir = os.path.join(opt.results_dir, opt.name, opt.phase + '_' + opt.epoch)
-        # if not os.path.exists(save_dir):
-        #     os.makedirs(save_dir)
+        # opt.phase = "val"
+        save_dir = os.path.join(opt.results_dir, opt.name, opt.phase + '_' + opt.epoch, 'prediction')
+        if not os.path.exists(save_dir):
+            os.makedirs(save_dir)
 
     data_loader = CreateDataLoader(opt)
     dataset = data_loader.load_data()
@@ -51,9 +51,11 @@ if __name__ == '__main__':
             if dataset.dataset.name() == 'Scannetv2':
                 gt = data["mask_fullsize"].cpu().int().numpy()[0]
                 pred = cv2.resize(pred[0], (gt.shape[1], gt.shape[0]), interpolation=cv2.INTER_NEAREST)
-                # save_scannet_prediction(model.output.cpu(), data['scan'][0], data['path'][0], dataset.dataset.root, save_dir)
-            save_images(webpage, model.get_current_visuals(), model.get_image_paths())
+                if opt.phase == "test":
+                    save_scannet_prediction(pred, data['scan'][0], data['path'][0], save_dir)
+            # save_images(webpage, model.get_current_visuals(), model.get_image_paths())
             conf_mat += confusion_matrix(gt, pred, dataset.dataset.num_labels, ignore_label=dataset.dataset.ignore_label)
+            # glob,mean,iou = getScores(conf_mat)
             test_loss_iter.append(model.loss_segmentation)
             print('Epoch {0:}, iters: {1:}/{2:}, loss: {3:.3f} '.format(opt.epoch,
                                                                         epoch_iter,

@@ -59,9 +59,9 @@ class Scannetv2Dataset(BaseDataset):
 			mask = cv2.resize(mask, size, interpolation=cv2.INTER_NEAREST)
 			if self.opt.phase == "val":
 				mask_fullsize = np.array(Image.open(self.masks[index]))
-		else:
-			mask = np.zeros((size), dtype=int)
-		
+		else: # test phase
+			mask = np.zeros((240, 320), dtype=int)
+			mask_fullsize = np.zeros((968, 1296), dtype=int)
 
 		rgb_image = transforms.ToTensor()(rgb_image)
 		rgb_image = rgb_image.type(torch.FloatTensor)
@@ -73,7 +73,7 @@ class Scannetv2Dataset(BaseDataset):
 
 		return {'rgb_image': rgb_image, 'depth_image': depth_image,
 		        'mask': mask, 'mask_fullsize': mask_fullsize,
-				'path': self.rgb_frames[index].split('/')[-1], 'scan':self.rgb_frames[index].split('/')[-2]}
+				'path': self.depth_frames[index].split('/')[-1], 'scan':self.depth_frames[index].split('/')[-3]}
 
 	def __len__(self):
 		return self.total_frames
