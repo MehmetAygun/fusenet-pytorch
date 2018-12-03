@@ -19,20 +19,37 @@ git clone https://github.com/MehmetAygun/fusenet-pytorch
 cd fusenet-pytorch
 pip install -r requirements.txt
 ```
+## Dataset preparation
 
 ## FuseNet train/test
 
 ### visdom visualization
 To view training errors and loss plots, set `--display_id 1`, run `python -m visdom.server` and click the URL http://localhost:8097. Checkpoints are saved under `./checkpoints/sunrgbd/`.
 
-### train
+### train & test on sunrgbd
 ```bash
-python train.py --dataroot datasets/sunrgbd --model fusenet --dataset sunrgbd --name sunrgbd --no_html --batch_size 4 --num_threads 8
+python train.py --dataroot datasets/sunrgbd --dataset sunrgbd --name sunrgbd
+
+python test.py --dataroot datasets/sunrgbd --dataset sunrgbd --name sunrgbd --epoch 400
 ```
 
-### test
+### train & test on nyuv2
 ```bash
-python test.py --dataroot datasets/sunrgbd --model fusenet --dataset sunrgbd --name sunrgbd --gpu_ids 0 --epoch 305
+python train.py --dataroot datasets/nyuv2 --dataset nyuv2 --name nyuv2
+
+python test.py --dataroot datasets/nyuv2 --dataset nyuv2 --name nyuv2 --epoch 400
+```
+
+### train & val & test on scannetv2
+```bash
+python train.py --dataroot datasets/scannet/tasks/scannet_frames_25k --dataset scannetv2
+                --name scannetv2
+
+python test.py --dataroot datasets/scannet/tasks/scannet_frames_25k --dataset scannetv2
+               --name scannetv2 --epoch 260 --phase val
+
+python test.py --dataroot datasets/scannet/tasks/scannet_frames_test --dataset scannetv2 
+               --name scannetv2 --epoch 260 --phase test
 ```
 
 ### Optimization scheme and loss weights
