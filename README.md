@@ -68,6 +68,7 @@ python test.py --dataroot datasets/scannet/tasks/scannet_frames_test --dataset s
 * Loss is weighted for SUNRGBD dataset
 * Learning rate is set to 0.01 for NYUv2 dataset
 * Results can be improved with a hyper-parameter search
+* Results on the scannetv2-test can be found [here](http://kaldir.vc.in.tum.de/scannet_benchmark/result_details?id=67).
 
 <table>
 <tr>
