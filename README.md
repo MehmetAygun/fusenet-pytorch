@@ -63,7 +63,7 @@ python test.py --dataroot datasets/scannet/tasks/scannet_frames_test --dataset s
                --name scannetv2 --epoch 260 --phase test
 ```
 
-### Optimization scheme and loss weights
+## Results
 * We use the training scheme defined in FuseNet
 * Loss is weighted for SUNRGBD dataset
 * Learning rate is set to 0.01 for NYUv2 dataset
