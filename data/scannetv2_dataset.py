@@ -32,10 +32,10 @@ class Scannetv2Dataset(BaseDataset):
 
 		self.total_frames = 0
 		for scan in self.scans:
-			rgb_frames = glob.glob("{}/{}/color/*.jpg".format(self.root,scan))
-			depth_frames = glob.glob("{}/{}/depth/*.png".format(self.root,scan))
-			masks = glob.glob("{}/{}/label/*.png".format(self.root,scan))
-			if len(rgb_frames) == len(depth_frames) == len(masks):
+			rgb_frames = glob.glob("{}/{}/color/*.jpg".format(self.root, scan))
+			depth_frames = glob.glob("{}/{}/depth/*.png".format(self.root, scan))
+			masks = glob.glob("{}/{}/label/*.png".format(self.root, scan))
+			if len(rgb_frames) == len(depth_frames):
 				rgb_frames.sort()
 				depth_frames.sort()
 				masks.sort()
@@ -48,13 +48,20 @@ class Scannetv2Dataset(BaseDataset):
 
 		size = (320,240)
 		rgb_image = np.array(Image.open(self.rgb_frames[index]))
-		rgb_image = cv2.resize(rgb_image,size,interpolation=cv2.INTER_LINEAR)
+		rgb_image = cv2.resize(rgb_image, size, interpolation=cv2.INTER_LINEAR)
 		depth_image = np.array(Image.open(self.depth_frames[index]))
-		depth_image = cv2.resize(depth_image,size,interpolation=cv2.INTER_NEAREST).astype(np.float)
+		depth_image = cv2.resize(depth_image, size,interpolation=cv2.INTER_NEAREST).astype(np.float)
 		depth_image = (depth_image - depth_image.min()) / (depth_image.max() - depth_image.min()) * 255
 		depth_image = depth_image.astype(np.uint8)
-		mask = np.array(Image.open(self.masks[index]))
-		mask = cv2.resize(mask,size,interpolation=cv2.INTER_NEAREST)
+		mask_fullsize = []
+		if self.masks:
+			mask = np.array(Image.open(self.masks[index]))
+			mask = cv2.resize(mask, size, interpolation=cv2.INTER_NEAREST)
+			if self.opt.phase == "val":
+				mask_fullsize = np.array(Image.open(self.masks[index]))
+		else:
+			mask = np.zeros((size), dtype=int)
+		
 
 		rgb_image = transforms.ToTensor()(rgb_image)
 		rgb_image = rgb_image.type(torch.FloatTensor)
@@ -64,7 +71,9 @@ class Scannetv2Dataset(BaseDataset):
 		mask = torch.from_numpy(mask)
 		mask = mask.type(torch.LongTensor)
 
-		return {'rgb_image': rgb_image, 'depth_image': depth_image, 'mask': mask, 'path': self.rgb_frames[index].split('/')[-1], 'scan':self.rgb_frames[index].split('/')[-2]}
+		return {'rgb_image': rgb_image, 'depth_image': depth_image,
+		        'mask': mask, 'mask_fullsize': mask_fullsize,
+				'path': self.rgb_frames[index].split('/')[-1], 'scan':self.rgb_frames[index].split('/')[-2]}
 
 	def __len__(self):
 		return self.total_frames

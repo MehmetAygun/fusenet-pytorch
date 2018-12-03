@@ -8,6 +8,7 @@ from util.util import confusion_matrix, getScores
 from util import html
 import torch
 import numpy as np
+import cv2
 
 if __name__ == '__main__':
     opt = TestOptions().parse()
@@ -17,6 +18,13 @@ if __name__ == '__main__':
     opt.serial_batches = True  # no shuffle
     opt.no_flip = True    # no flip
     opt.display_id = -1   # no visdom display
+
+    if opt.dataset_mode == "scannetv2":
+        opt.phase = "val"
+        # save_dir = os.path.join(opt.results_dir, opt.name, opt.phase + '_' + opt.epoch)
+        # if not os.path.exists(save_dir):
+        #     os.makedirs(save_dir)
+
     data_loader = CreateDataLoader(opt)
     dataset = data_loader.load_data()
     model = create_model(opt, dataset.dataset)
@@ -40,14 +48,12 @@ if __name__ == '__main__':
             gt = model.mask.cpu().int().numpy()
             _, pred = torch.max(model.output.data.cpu(), 1)
             pred = pred.float().detach().int().numpy()
-            conf_mat += confusion_matrix(gt, pred, dataset.dataset.num_labels, ignore_label=dataset.dataset.ignore_label)
+            if dataset.dataset.name() == 'Scannetv2':
+                gt = data["mask_fullsize"].cpu().int().numpy()[0]
+                pred = cv2.resize(pred[0], (gt.shape[1], gt.shape[0]), interpolation=cv2.INTER_NEAREST)
+                # save_scannet_prediction(model.output.cpu(), data['scan'][0], data['path'][0], dataset.dataset.root, save_dir)
             save_images(webpage, model.get_current_visuals(), model.get_image_paths())
-            if dataset.name() == 'Scannetv2':
-                save_dir = os.path.join(opt.results_dir,opt.name,'prediction')
-                if not os.path.exists(save_dir):
-                    os.makedirs(save_dir)
-                save_scannet_prediction(model.mask,data['scan'],data['path'],dataset.dataset.root,save_dir)
-            losses = model.get_current_losses()
+            conf_mat += confusion_matrix(gt, pred, dataset.dataset.num_labels, ignore_label=dataset.dataset.ignore_label)
             test_loss_iter.append(model.loss_segmentation)
             print('Epoch {0:}, iters: {1:}/{2:}, loss: {3:.3f} '.format(opt.epoch,
                                                                         epoch_iter,

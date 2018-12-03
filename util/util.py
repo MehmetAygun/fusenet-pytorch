@@ -77,8 +77,10 @@ def confusion_matrix(x , y, n, ignore_label=None, mask=None):
         return np.bincount(n * x[k].astype(int) + y[k], minlength=n**2).reshape(n, n)
 
 def getScores(conf_matrix):
+        if conf_matrix.sum() == 0:
+            return 0, 0, 0
         with np.errstate(divide='ignore',invalid='ignore'):
-            overall = 1.0*np.diag(conf_matrix).sum() / conf_matrix.sum()
-            perclass = 1.0* np.diag(conf_matrix) / conf_matrix.sum(1)
-            IU = 1.0*np.diag(conf_matrix) / (conf_matrix.sum(1) + conf_matrix.sum(0) -np.diag(conf_matrix))
+            overall = np.diag(conf_matrix).sum() / conf_matrix.sum().float()
+            perclass = np.diag(conf_matrix) / conf_matrix.sum(1).float()
+            IU = np.diag(conf_matrix) / (conf_matrix.sum(1) + conf_matrix.sum(0) - np.diag(conf_matrix)).float()
         return overall * 100., np.nanmean(perclass) * 100., np.nanmean(IU) * 100.

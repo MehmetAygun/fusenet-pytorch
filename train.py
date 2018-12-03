@@ -15,6 +15,7 @@ from util.util import confusion_matrix, getScores
 import numpy as np
 import random
 import torch
+import cv2
 
 if __name__ == '__main__':
 	train_opt = TrainOptions().parse()
@@ -98,6 +99,9 @@ if __name__ == '__main__':
 					gt = model.mask.cpu().int().numpy()
 					_, pred = torch.max(model.output.data.cpu(), 1)
 					pred = pred.float().detach().int().numpy()
+					if dataset.dataset.name() == 'Scannetv2':
+		                gt = data["mask_fullsize"].cpu().int().numpy()[0]
+		                pred = cv2.resize(pred[0], (gt.shape[1], gt.shape[0]), interpolation=cv2.INTER_NEAREST)
 					conf_mat += confusion_matrix(gt, pred, test_dataset.dataset.num_labels, ignore_label=test_dataset.dataset.ignore_label)
 					# visualizer.display_current_results(model.get_current_visuals(), epoch, False)
 					losses = model.get_current_losses()
