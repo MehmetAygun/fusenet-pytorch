@@ -20,6 +20,17 @@ cd fusenet-pytorch
 pip install -r requirements.txt
 ```
 ## Dataset preparation
+### sunrgbd dataset
+- download and untar the [preprocessed sunrgbd](https://vision.in.tum.de/webarchive/hazirbas/fusenet-pytorch/sun/sunrgbd.tar.gz) dataset under ```/datasets/sunrgbd```.
+### nyuv2 dataset
+- download the dataset and create the training set.
+```bash
+cd datasets
+sh download_nyuv2.sh
+python create_training_set.py 
+```
+### scannetv2 dataset
+- download the ```scannet_frames_25k``` and ```scannet_frames_test``` under ```/datasets/scannet/tasks/```.
 
 ## FuseNet train/test
 
