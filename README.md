@@ -53,13 +53,13 @@ python test.py --dataroot datasets/nyuv2 --dataset nyuv2 --name nyuv2 --epoch 40
 
 ### train & val & test on scannetv2
 ```bash
-python train.py --dataroot datasets/scannet/tasks/scannet_frames_25k --dataset scannetv2
+python train.py --dataroot datasets/scannet/tasks/scannet_frames_25k --dataset scannetv2 \
                 --name scannetv2
 
-python test.py --dataroot datasets/scannet/tasks/scannet_frames_25k --dataset scannetv2
+python test.py --dataroot datasets/scannet/tasks/scannet_frames_25k --dataset scannetv2 \
                --name scannetv2 --epoch 260 --phase val
 
-python test.py --dataroot datasets/scannet/tasks/scannet_frames_test --dataset scannetv2 
+python test.py --dataroot datasets/scannet/tasks/scannet_frames_test --dataset scannetv2 \
                --name scannetv2 --epoch 260 --phase test
 ```
 
