@@ -22,6 +22,11 @@ class Scannetv2Dataset(BaseDataset):
 		self.num_labels = 41
 		self.ignore_label = 0
 		self.class_weights = None
+		with open('./datasets/scannet/scannetv2_weigths.txt') as f:
+			weights = f.readlines()
+		self.class_weights = torch.from_numpy(np.array([float(x.strip()) for x in weights]))
+		self.class_weights = self.class_weights.type(torch.FloatTensor)
+
 		with open('./datasets/scannet/scannetv2_{}.txt'.format(opt.phase)) as f:
 			scans = f.readlines()
 		self.scans = [x.strip() for x in scans]
