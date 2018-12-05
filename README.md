@@ -21,7 +21,8 @@ pip install -r requirements.txt
 ```
 ## Dataset preparation
 ### sunrgbd dataset
-- download and untar the [preprocessed sunrgbd](https://vision.in.tum.de/webarchive/hazirbas/fusenet-pytorch/sun/sunrgbd.tar.gz) dataset under ```/datasets/sunrgbd```.
+- Download and untar the [preprocessed sunrgbd](https://vision.in.tum.de/webarchive/hazirbas/fusenet-pytorch/sun/sunrgbd.tar.gz) dataset under ```/datasets/sunrgbd```
+
 ### nyuv2 dataset
 - Download the dataset and create the training set
 ```bash
