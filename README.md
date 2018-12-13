@@ -28,7 +28,7 @@ pip install -r requirements.txt
 ```bash
 cd datasets
 sh download_nyuv2.sh
-python create_training_set.py 
+python create_training_set.py
 ```
 ### scannetv2 dataset
 - Download the ```scannet_frames_25k``` and ```scannet_frames_test``` under ```/datasets/scannet/tasks/```
@@ -70,7 +70,7 @@ python test.py --dataroot datasets/scannet/tasks/scannet_frames_test --dataset s
 * Loss is weighted for SUNRGBD dataset
 * Learning rate is set to 0.01 for NYUv2 dataset
 * Results can be improved with a hyper-parameter search
-* Results on the scannetv2-test can be found [here](http://kaldir.vc.in.tum.de/scannet_benchmark/result_details?id=67)
+* Results on the scannetv2-test (w/o class-weighted loss) can be found [here](http://kaldir.vc.in.tum.de/scannet_benchmark/result_details?id=67)
 
 <table>
 <tr>
@@ -83,6 +83,9 @@ python test.py --dataroot datasets/scannet/tasks/scannet_frames_test --dataset s
 <td> <a href="https://vision.in.tum.de/webarchive/hazirbas/fusenet-pytorch/nyu/400_net_FuseNet.pth"> <b>nyuv2 </a> <td> 66.00 <td> 43.40 <td> 32.70 <td>  68.76 <td> 46.42 <td> 35.48
 <tr>
 <td> <a href="https://vision.in.tum.de/webarchive/hazirbas/fusenet-pytorch/scannet/260_net_FuseNet.pth"> <b>scannetv2-val </a> <td> -- <td> -- <td> -- <td> 76.32 <td> 55.84 <td> 44.12
+<tr>
+<td> <a href="https://vision.in.tum.de/webarchive/hazirbas/fusenet-pytorch/scannet/380_net_FuseNet.pth">
+<b>scannetv2-cls_weighted-val </a> <td> -- <td> -- <td> -- <td> 76.26 <td> 55.74 <td> 44.40
 </table>
 
 ## Citation
