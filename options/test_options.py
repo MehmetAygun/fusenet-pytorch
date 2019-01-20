@@ -8,7 +8,7 @@ class TestOptions(BaseOptions):
         parser.add_argument('--results_dir', type=str, default='./checkpoints/', help='saves results here.')
         parser.add_argument('--aspect_ratio', type=float, default=1.0, help='aspect ratio of result images')
         parser.add_argument('--phase', type=str, default='test', help='train, val, test, etc')
-        parser.set_defaults(model='test')
+        parser.set_defaults(model='fusenet')
         # To avoid cropping, the loadSize should be the same as fineSize
         parser.set_defaults(loadSize=parser.get_default('fineSize'))
         self.isTrain = False

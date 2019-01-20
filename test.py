@@ -54,13 +54,12 @@ if __name__ == '__main__':
                     save_scannet_prediction(pred, data['scan'][0], data['path'][0], save_dir)
             save_images(webpage, model.get_current_visuals(), model.get_image_paths())
             conf_mat += confusion_matrix(gt, pred, dataset.dataset.num_labels, ignore_label=dataset.dataset.ignore_label)
-            test_loss_iter.append(model.loss_segmentation)
+            test_loss_iter.append(model.loss_segmentation.cpu().numpy())
             print('Epoch {0:}, iters: {1:}/{2:}, loss: {3:.3f} '.format(opt.epoch,
                                                                         epoch_iter,
                                                                         len(dataset) * opt.batch_size,
                                                                         test_loss_iter[-1]), end='\r')
 
-        print()
         avg_test_loss = np.mean(test_loss_iter)
         print ('Epoch {0:} test loss: {1:.3f} '.format(opt.epoch, avg_test_loss))
         glob,mean,iou = getScores(conf_mat)
