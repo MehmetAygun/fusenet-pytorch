@@ -20,7 +20,7 @@ class BaseOptions():
         parser.add_argument('--name', type=str, default='experiment_name', help='name of the experiment. It decides where to store samples and models')
         parser.add_argument('--dataset_mode', type=str, default='unaligned', help='chooses how datasets are loaded. [unaligned | aligned | single]')
         parser.add_argument('--model', type=str, default='fusenet',
-                            help='chooses which model to use. cycle_gan, pix2pix, test')
+                            help='chooses which model to use.')
         #parser.add_argument('--direction', type=str, default='AtoB', help='AtoB or BtoA')
         parser.add_argument('--epoch', type=str, default='latest', help='which epoch to load? set to latest to use latest cached model')
         parser.add_argument('--num_threads', default=8, type=int, help='# threads for loading data')
