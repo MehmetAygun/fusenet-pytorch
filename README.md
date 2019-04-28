@@ -59,10 +59,10 @@ python train.py --dataroot datasets/scannet/tasks/scannet_frames_25k --dataset s
                 --name scannetv2
 
 python test.py --dataroot datasets/scannet/tasks/scannet_frames_25k --dataset scannetv2 \
-               --name scannetv2 --epoch 260 --phase val
+               --name scannetv2 --epoch 380 --phase val
 
 python test.py --dataroot datasets/scannet/tasks/scannet_frames_test --dataset scannetv2 \
-               --name scannetv2 --epoch 260 --phase test
+               --name scannetv2 --epoch 380 --phase test
 ```
 
 ## Results
