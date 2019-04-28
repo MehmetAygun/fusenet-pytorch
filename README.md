@@ -88,6 +88,13 @@ python test.py --dataroot datasets/scannet/tasks/scannet_frames_test --dataset s
 <b>scannetv2-cls_weighted-val </a> <td> -- <td> -- <td> -- <td> 76.26 <td> 55.74 <td> 44.40
 </table>
 
+| scannetv2-test | avg iou | bathtub | bed  | bookshelf | cabinet | chair | counter | curtain | desk | door | floor | other furniture | picture | refrigerator | shower curtain | sink | sofa | table | toilet | wall | window | 
+|-----------------|---------|---------|------|-----------|---------|-------|---------|---------|------|------|-------|----------------|---------|--------------|----------------|------|------|-------|--------|------|--------| 
+| no-cls_weighted | 52.1    | 59.1    | 68.2 | 22.0      | 48.8    | 27.9  | 34.4    | 61.0    | 46.1 | 47.5 | 91.0  | 29.3           | 44.7    | 51.2         | 39.7           | 61.8 | 56.7 | 45.2  | 73.4   | 78.2 | 56.6   | 
+| cls_weighted    | 53.5    | 57.0    | 68.1 | 18.2      | 51.2    | 29.0  | 43.1    | 65.9    | 50.4 | 49.5 | 90.3  | 30.8           | 42.8    | 52.3         | 36.5           | 67.6 | 62.1 | 47.0  | 76.2   | 77.9 | 54.1   |
+
+
+
 ## Citation
 ```
 @inproceedings{hazirbas16fusenet,
