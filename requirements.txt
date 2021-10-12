@@ -9,7 +9,7 @@ ipython==7.0.1
 ipython-genutils==0.2.0
 jedi==0.13.1
 numpy==1.15.3
-opencv-python==3.4.3.18
+opencv-python==4.2.0.32
 parso==0.3.1
 pexpect==4.6.0
 pickleshare==0.7.5
